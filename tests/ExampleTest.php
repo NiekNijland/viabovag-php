@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+namespace NiekNijland\ViaBOVAG\Tests;
+
+use PHPUnit\Framework\TestCase;
+
+class ExampleTest extends TestCase
+{
+    public function test_true_is_true(): void
+    {
+        $this->assertTrue(true);
+    }
+}
