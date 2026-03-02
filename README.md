@@ -1,7 +1,7 @@
 # ViaBOVAG PHP
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/nieknijland/viabovag.svg?style=flat-square)](https://packagist.org/packages/nieknijland/viabovag)
-[![Tests](https://img.shields.io/github/actions/workflow/status/nieknijland/viabovag/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/nieknijland/viabovag/actions/workflows/run-tests.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/nieknijland/viabovag-php/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/nieknijland/viabovag-php/actions/workflows/run-tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/nieknijland/viabovag.svg?style=flat-square)](https://packagist.org/packages/nieknijland/viabovag)
 
 A PHP package to search and retrieve vehicle listings from [viabovag.nl](https://www.viabovag.nl), the BOVAG-certified vehicle marketplace in the Netherlands. Supports cars, motorcycles, bicycles, and campers.
@@ -20,13 +20,26 @@ composer require nieknijland/viabovag
 
 ```php
 use NiekNijland\ViaBOVAG\ViaBOVAG;
+use NiekNijland\ViaBOVAG\Data\Brand;
 use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
 
-$client = new ViaBOVAG();
+$client = new ViaBOVAG;
+
+$brands = $client->getBrands(MobilityType::Car);
+$volkswagenBrand = null;
+
+foreach ($brands as $brand) {
+    if ($brand->slug === 'volkswagen') {
+        $volkswagenBrand = $brand;
+
+        break;
+    }
+}
 
 // Search for cars
 $results = $client->search(new CarSearchCriteria(
-    brand: 'volkswagen',
+    brand: $volkswagenBrand,
     priceFrom: 5000,
     priceTo: 20000,
 ));
@@ -49,17 +62,73 @@ The client accepts an optional PSR-18 HTTP client and PSR-16 cache:
 use NiekNijland\ViaBOVAG\ViaBOVAG;
 
 // Default: uses Guzzle, no cache
-$client = new ViaBOVAG();
+$client = new ViaBOVAG;
 
 // With custom HTTP client and cache
 $client = new ViaBOVAG(
     httpClient: $yourPsr18Client,
     cache: $yourPsr16Cache,
-    cacheTtl: 3600, // Build ID cache TTL in seconds (default: 1 hour)
+    cacheTtl: 3600,    // Build ID cache TTL in seconds (default: 1 hour)
+    maxRetries: 2,     // Retries on transient errors like 429/503 (default: 2)
 );
 ```
 
 The cache is used to persist the viabovag.nl Next.js build ID between requests. Without a cache, the build ID is fetched from the homepage on every new client instance.
+
+### Fetching Brand Value Objects
+
+`brand` filters now accept a `Brand` value object instead of a raw string. Use `getBrands()` to retrieve valid values from viabovag:
+
+```php
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
+
+$brands = $client->getBrands(MobilityType::Motorcycle);
+
+foreach ($brands as $brand) {
+    echo "{$brand->label} ({$brand->slug}) - {$brand->count}\n";
+}
+```
+
+### Fetching Model Value Objects
+
+`model` filters now accept a `Model` value object. Use `getModels()` and optionally provide a `Brand` to fetch models for a specific marque:
+
+```php
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
+
+$models = $client->getModels(
+    MobilityType::Car,
+    new Brand(slug: 'volkswagen', label: 'Volkswagen'),
+);
+
+foreach ($models as $model) {
+    echo "{$model->label} ({$model->slug}) - {$model->count}\n";
+}
+```
+
+### Fetching Generic Facet Options
+
+Use `getFacetOptions()` with the `FacetName` enum for all other facet-backed filter values. You can scope by brand and model when needed:
+
+```php
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\FacetName;
+use NiekNijland\ViaBOVAG\Data\Model;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
+
+$frameTypes = $client->getFacetOptions(
+    MobilityType::Motorcycle,
+    FacetName::FrameType,
+    new Brand(slug: 'yamaha', label: 'Yamaha'),
+    new Model(slug: 'mt-07', label: 'MT-07'),
+);
+
+foreach ($frameTypes as $frameType) {
+    echo "{$frameType->label} ({$frameType->slug}) - {$frameType->count}\n";
+}
+```
 
 ### Searching Listings
 
@@ -69,21 +138,23 @@ Use a search criteria class matching the vehicle type you want to search for. Al
 
 ```php
 use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\Model;
 use NiekNijland\ViaBOVAG\Data\CarBodyType;
 use NiekNijland\ViaBOVAG\Data\CarFuelType;
 use NiekNijland\ViaBOVAG\Data\TransmissionType;
 use NiekNijland\ViaBOVAG\Data\AccessoryFilter;
 
 $results = $client->search(new CarSearchCriteria(
-    brand: 'volkswagen',
-    model: 'golf',
+    brand: new Brand(slug: 'volkswagen', label: 'Volkswagen'),
+    model: new Model(slug: 'golf', label: 'Golf'),
     priceFrom: 5000,
     priceTo: 25000,
     yearFrom: 2018,
     mileageTo: 100000,
     bodyTypes: [CarBodyType::Hatchback],
-    fuelTypes: [CarFuelType::Benzine, CarFuelType::Hybride],
-    transmission: TransmissionType::Automatisch,
+    fuelTypes: [CarFuelType::Petrol, CarFuelType::Hybrid],
+    transmission: TransmissionType::Automatic,
     accessories: [AccessoryFilter::Navigation, AccessoryFilter::CruiseControl],
     page: 1,
 ));
@@ -93,14 +164,17 @@ $results = $client->search(new CarSearchCriteria(
 
 ```php
 use NiekNijland\ViaBOVAG\Data\MotorcycleSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\Brand;
 use NiekNijland\ViaBOVAG\Data\MotorcycleBodyType;
 use NiekNijland\ViaBOVAG\Data\DriversLicense;
+use NiekNijland\ViaBOVAG\Data\SortOrder;
 
 $results = $client->search(new MotorcycleSearchCriteria(
-    brand: 'suzuki',
+    brand: new Brand(slug: 'suzuki', label: 'Suzuki'),
     engineCapacityFrom: 600,
     bodyTypes: [MotorcycleBodyType::Sport, MotorcycleBodyType::Naked],
     driversLicense: DriversLicense::A,
+    sortOrder: SortOrder::PriceAscending,
 ));
 ```
 
@@ -109,10 +183,11 @@ $results = $client->search(new MotorcycleSearchCriteria(
 ```php
 use NiekNijland\ViaBOVAG\Data\BicycleSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\BicycleFuelType;
+use NiekNijland\ViaBOVAG\Data\Brand;
 
 $results = $client->search(new BicycleSearchCriteria(
-    brand: 'gazelle',
-    fuelTypes: [BicycleFuelType::Elektriciteit],
+    brand: new Brand(slug: 'gazelle', label: 'Gazelle'),
+    fuelTypes: [BicycleFuelType::Electric],
     priceTo: 3000,
 ));
 ```
@@ -121,9 +196,10 @@ $results = $client->search(new BicycleSearchCriteria(
 
 ```php
 use NiekNijland\ViaBOVAG\Data\CamperSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\Brand;
 
 $results = $client->search(new CamperSearchCriteria(
-    brand: 'volkswagen',
+    brand: new Brand(slug: 'volkswagen', label: 'Volkswagen'),
     yearFrom: 2020,
     priceTo: 80000,
 ));
@@ -134,7 +210,9 @@ $results = $client->search(new CamperSearchCriteria(
 `SearchResult` provides pagination helpers:
 
 ```php
-$results = $client->search(new CarSearchCriteria(brand: 'toyota'));
+$results = $client->search(new CarSearchCriteria(
+    brand: new Brand(slug: 'toyota', label: 'Toyota'),
+));
 
 $results->totalCount;      // Total matching listings across all pages
 $results->currentPage;     // Current page number
@@ -155,18 +233,31 @@ foreach ($results->listings as $listing) {
 }
 ```
 
+### Iterating All Pages
+
+Use `searchAll()` to iterate through all matching listings across all pages. It returns a lazy `Generator` that fetches the next page only when needed:
+
+```php
+foreach ($client->searchAll(new CarSearchCriteria(
+    brand: new Brand(slug: 'volkswagen', label: 'Volkswagen'),
+)) as $listing) {
+    echo "{$listing->title} - EUR {$listing->price}\n";
+}
+```
+
 ### Getting Listing Details
 
 Fetch full vehicle details from a listing or by URL slug:
 
 ```php
-// From a listing object
-$detail = $client->getDetail($listing);
-
-// By slug and mobility type
 use NiekNijland\ViaBOVAG\Data\MobilityType;
 
-$detail = $client->getDetailBySlug('suzuki-gsx-r-1300-hayabusa-abc123', MobilityType::Motor);
+// From a listing object (mobility type is inferred)
+$detail = $client->getDetail($listing);
+
+// By slug (mobility type is required)
+$detail = $client->getDetailBySlug('suzuki-gsx-r-1300-hayabusa-abc123', MobilityType::Motorcycle);
+$detail = $client->getDetailBySlug('volkswagen-golf-test-abc123', MobilityType::Car);
 ```
 
 The `ListingDetail` contains all data from the vehicle detail page:
@@ -201,8 +292,8 @@ All search criteria classes share these filter parameters:
 
 | Parameter | Type | Description |
 |---|---|---|
-| `brand` | `?string` | Brand name (e.g. `'volkswagen'`) |
-| `model` | `?string` | Model name (e.g. `'golf'`) |
+| `brand` | `?Brand` | Brand value object (use `getBrands()` to fetch valid options) |
+| `model` | `?Model` | Model value object (use `getModels()` to fetch valid options) |
 | `modelKeywords` | `?string` | Model keywords for free-text matching |
 | `priceFrom` | `?int` | Minimum price in euros |
 | `priceTo` | `?int` | Maximum price in euros |
@@ -217,21 +308,22 @@ All search criteria classes share these filter parameters:
 | `enginePowerFrom` | `?int` | Minimum engine power in HP |
 | `enginePowerTo` | `?int` | Maximum engine power in HP |
 | `colors` | `?string[]` | Color filter values |
-| `condition` | `?Condition` | `Condition::Occasion` or `Condition::Nieuw` |
+| `condition` | `?Condition` | `Condition::Used` or `Condition::New` |
 | `postalCode` | `?string` | Postal code for location search |
-| `distance` | `?Distance` | Search radius from postal code |
+| `distance` | `?Distance` | Currently ignored by viabovag API (postal code searches use 20 km default) |
 | `warranty` | `?BovagWarranty` | BOVAG warranty duration filter |
 | `fullyServiced` | `?bool` | 100% maintained |
 | `hasBovagChecklist` | `?bool` | 40-point BOVAG checklist completed |
 | `hasBovagMaintenanceFree` | `?bool` | BOVAG maintenance-free |
 | `hasBovagImportOdometerCheck` | `?bool` | BOVAG import odometer check |
-| `carServicedOnDelivery` | `?bool` | Serviced on delivery |
+| `servicedOnDelivery` | `?bool` | Serviced on delivery |
 | `hasNapWeblabel` | `?bool` | NAP web label present |
 | `vatDeductible` | `?bool` | VAT deductible |
 | `isFinanceable` | `?bool` | Online financing available |
 | `isImported` | `?bool` | Imported vehicle |
 | `keywords` | `?string` | Free-text keyword search |
 | `availableSince` | `?AvailableSince` | Filter by listing date |
+| `sortOrder` | `?SortOrder` | Sort order for results |
 | `page` | `int` | Page number (default: `1`) |
 
 ### Car-Specific Filters
@@ -251,6 +343,22 @@ All search criteria classes share these filter parameters:
 | `driveTypes` | `?DriveType[]` | Drive type (FWD/RWD/4WD) |
 | `accessories` | `?AccessoryFilter[]` | Required accessories |
 | `emptyMassTo` | `?int` | Maximum empty weight |
+| `city` | `?FilterOption` | City option value object (`City` facet) |
+| `isLeaseable` | `?bool` | Online leaseable |
+| `doorCountFrom` | `?int` | Minimum door count |
+| `doorCountTo` | `?int` | Maximum door count |
+| `wheelSizeFrom` | `?int` | Minimum wheel size in inches |
+| `wheelSizeTo` | `?int` | Maximum wheel size in inches |
+| `brakedTowingWeightFrom` | `?int` | Minimum braked towing weight |
+| `brakedTowingWeightTo` | `?int` | Maximum braked towing weight |
+| `maximumMassTo` | `?int` | Maximum mass |
+| `batteryCapacityFrom` | `?int` | Minimum battery capacity (kWh) |
+| `batteryCapacityTo` | `?int` | Maximum battery capacity (kWh) |
+| `maxChargingPowerHome` | `?int` | Minimum home charging power (kW) |
+| `maxQuickChargingPower` | `?int` | Minimum quick charging power (kW) |
+| `isPluginHybrid` | `?bool` | Plugin hybrid vehicle |
+| `energyLabel` | `?FilterOption` | Energy label option value object (`EnergyLabel` facet) |
+| `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
 
 ### Motorcycle-Specific Filters
 
@@ -262,6 +370,7 @@ All search criteria classes share these filter parameters:
 | `fuelTypes` | `?MotorcycleFuelType[]` | Fuel type filters |
 | `transmission` | `?TransmissionType` | Transmission type |
 | `driversLicense` | `?DriversLicense` | Required license (A, A1, A2) |
+| `frameType` | `?FilterOption` | Frame type option value object (`FrameType` facet) |
 
 ### Bicycle-Specific Filters
 
@@ -269,6 +378,15 @@ All search criteria classes share these filter parameters:
 |---|---|---|
 | `bodyTypes` | `?BicycleBodyType[]` | Body type filters |
 | `fuelTypes` | `?BicycleFuelType[]` | Fuel type filters |
+| `frameHeightFrom` | `?int` | Minimum frame height in cm |
+| `frameHeightTo` | `?int` | Maximum frame height in cm |
+| `frameMaterial` | `?FilterOption` | Frame material option value object (`FrameMaterial` facet) |
+| `brakeType` | `?FilterOption` | Brake type option value object (`BrakeType` facet) |
+| `batteryRemovable` | `?bool` | Removable battery |
+| `batteryCapacityFrom` | `?int` | Minimum battery capacity (Wh) |
+| `batteryCapacityTo` | `?int` | Maximum battery capacity (Wh) |
+| `engineBrand` | `?FilterOption` | Motor brand option value object (`EngineBrand` facet) |
+| `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
 
 ### Camper-Specific Filters
 
@@ -277,6 +395,14 @@ All search criteria classes share these filter parameters:
 | `engineCapacityFrom` | `?int` | Minimum engine capacity in cc |
 | `engineCapacityTo` | `?int` | Maximum engine capacity in cc |
 | `transmission` | `?TransmissionType` | Transmission type |
+| `bedCount` | `?int` | Number of sleeping places |
+| `bedLayout` | `?FilterOption` | Bed layout option value object (`BedLayout` facet) |
+| `seatingLayout` | `?FilterOption` | Seating layout option value object (`SeatingLayout` facet) |
+| `sanitaryLayout` | `?FilterOption` | Sanitary layout option value object (`SanitaryLayout` facet) |
+| `kitchenLayout` | `?FilterOption` | Kitchen layout option value object (`KitchenLayout` facet) |
+| `interiorHeightFrom` | `?int` | Minimum interior standing height in cm |
+| `camperChassisBrand` | `?FilterOption` | Chassis brand option value object (`CamperChassisBrand` facet) |
+| `maximumMassTo` | `?int` | Maximum mass limit |
 
 ## Data Transfer Objects
 
@@ -289,13 +415,14 @@ Returned in search results.
 | Property | Type | Description |
 |---|---|---|
 | `id` | `string` | UUID |
-| `mobilityType` | `string` | Vehicle category (`"motor"`, `"car"`, etc.) |
+| `mobilityType` | `MobilityType` | Vehicle category enum |
 | `url` | `string` | Full URL on viabovag.nl |
 | `friendlyUriPart` | `string` | URL slug for detail lookup |
 | `externalAdvertisementUrl` | `?string` | External dealer URL |
 | `imageUrl` | `?string` | Primary image URL |
 | `title` | `string` | Listing title |
 | `price` | `int` | Price in whole euros |
+| `priceExcludesVat` | `bool` | Whether price excludes VAT |
 | `isFinanceable` | `bool` | Online financing available |
 | `vehicle` | `Vehicle` | Vehicle data |
 | `company` | `Company` | Dealer data |
@@ -309,7 +436,10 @@ Returned by `getDetail()` and `getDetailBySlug()`.
 | `id` | `string` | UUID |
 | `title` | `string` | Vehicle title |
 | `price` | `int` | Price in whole euros |
+| `priceExcludesVat` | `bool` | Whether price excludes VAT |
 | `description` | `?string` | Dealer description (HTML) |
+| `url` | `?string` | Full URL on viabovag.nl |
+| `mobilityType` | `?MobilityType` | Vehicle category enum |
 | `media` | `Media[]` | Images and videos |
 | `vehicle` | `Vehicle` | Full vehicle specifications |
 | `company` | `Company` | Dealer info with address, coordinates, reviews |
@@ -319,10 +449,17 @@ Returned by `getDetail()` and `getDetailBySlug()`.
 | `licensePlate` | `?string` | License plate number |
 | `externalNumber` | `?string` | External reference number |
 | `structuredData` | `array\|string\|null` | JSON-LD structured data |
+| `isEligibleForVehicleReport` | `bool` | Eligible for vehicle history report |
+| `financingProvider` | `?string` | Financing provider name |
+| `leasePrice` | `?int` | Monthly lease price in euros |
+| `roadTax` | `?int` | Road tax in whole euros |
+| `fuelConsumption` | `?string` | Fuel consumption (formatted string) |
+| `bijtellingPercentage` | `?string` | Addition percentage for company cars |
+| `returnWarrantyMileage` | `?int` | Return warranty mileage limit in km |
 
 ### `Vehicle`
 
-Vehicle data shared between search results and detail pages.
+Vehicle data shared between search results and detail pages. Extended fields (marked *detail only*) are populated only from detail responses.
 
 | Property | Type | Description |
 |---|---|---|
@@ -330,7 +467,7 @@ Vehicle data shared between search results and detail pages.
 | `brand` | `string` | Brand name |
 | `model` | `string` | Model name |
 | `mileage` | `int` | Mileage in km |
-| `mileageUnit` | `string` | Always `"kilometer"` |
+| `mileageUnit` | `MileageUnit` | Mileage unit enum |
 | `year` | `int` | Production year |
 | `month` | `?int` | Production month |
 | `fuelTypes` | `string[]` | Fuel types |
@@ -346,10 +483,27 @@ Vehicle data shared between search results and detail pages.
 | `bovagWarranty` | `?string` | BOVAG warranty type |
 | `hasReturnWarranty` | `bool` | Return warranty available |
 | `servicedOnDelivery` | `bool` | Serviced on delivery |
+| `edition` | `?string` | Vehicle edition *(detail only)* |
+| `condition` | `?string` | Condition: `"occasion"`, `"nieuw"` *(detail only)* |
+| `modelYear` | `?int` | Model year *(detail only)* |
+| `frameType` | `?string` | Frame type *(detail only)* |
+| `primaryFuelType` | `?string` | Primary fuel type *(detail only)* |
+| `secondaryFuelType` | `?string` | Secondary fuel type *(detail only)* |
+| `isHybridVehicle` | `?bool` | Whether vehicle is hybrid *(detail only)* |
+| `energyLabel` | `?string` | Energy label *(detail only)* |
+| `fuelConsumptionCombined` | `?string` | Combined fuel consumption *(detail only)* |
+| `gearCount` | `?int` | Number of gears *(detail only)* |
+| `isImported` | `?bool` | Whether vehicle is imported *(detail only)* |
+| `hasNapLabel` | `?bool` | NAP label present *(detail only)* |
+| `wheelSize` | `?string` | Wheel size *(detail only)* |
+| `emptyWeight` | `?int` | Empty weight in kg *(detail only)* |
+| `maxWeight` | `?int` | Maximum weight in kg *(detail only)* |
+| `bedCount` | `?int` | Number of beds (campers) *(detail only)* |
+| `sanitary` | `?string` | Sanitary description (campers) *(detail only)* |
 
 ### `Company`
 
-Dealer/company information.
+Dealer/company information. Fields marked *(detail only)* are populated only from detail responses.
 
 | Property | Type | Description |
 |---|---|---|
@@ -358,12 +512,18 @@ Dealer/company information.
 | `phoneNumber` | `?string` | Phone number |
 | `websiteUrl` | `?string` | Website URL |
 | `callTrackingCode` | `?string` | Call tracking identifier |
-| `street` | `?string` | Street address (detail only) |
-| `postalCode` | `?string` | Postal code (detail only) |
-| `latitude` | `?float` | GPS latitude (detail only) |
-| `longitude` | `?float` | GPS longitude (detail only) |
-| `reviewScore` | `?float` | Review rating (detail only) |
-| `reviewCount` | `?int` | Number of reviews (detail only) |
+| `id` | `?int` | Company ID *(detail only)* |
+| `street` | `?string` | Street address *(detail only)* |
+| `houseNumber` | `?string` | House number *(detail only)* |
+| `houseNumberExtension` | `?string` | House number extension *(detail only)* |
+| `postalCode` | `?string` | Postal code *(detail only)* |
+| `countryCode` | `?string` | Country code *(detail only)* |
+| `latitude` | `?float` | GPS latitude *(detail only)* |
+| `longitude` | `?float` | GPS longitude *(detail only)* |
+| `reviewScore` | `?float` | Review rating *(detail only)* |
+| `reviewCount` | `?int` | Number of reviews *(detail only)* |
+| `reviewProvider` | `?string` | Review provider (e.g. `"google"`) *(detail only)* |
+| `isOpenNow` | `?bool` | Whether currently open *(detail only)* |
 
 ### `SearchResult`
 
@@ -374,6 +534,7 @@ Paginated search result container.
 | `listings` | `Listing[]` | Array of listings (up to 24 per page) |
 | `totalCount` | `int` | Total matching results |
 | `currentPage` | `int` | Current page number |
+| `facets` | `SearchFacet[]` | Available search facets (brands, body types, etc.) |
 | `totalPages()` | `int` | Calculated total pages |
 | `hasNextPage()` | `bool` | More pages available |
 | `hasPreviousPage()` | `bool` | Previous pages available |
@@ -383,31 +544,36 @@ Paginated search result container.
 
 | Class | Properties | Description |
 |---|---|---|
+| `Brand` | `slug` (`string`), `label` (`string`), `count` (`?int`) | Search brand option value object |
+| `Model` | `slug` (`string`), `label` (`string`), `count` (`?int`) | Search model option value object |
+| `FilterOption` | `slug` (`string`), `label` (`string`), `count` (`?int`) | Generic facet option value object |
 | `Media` | `type` (`MediaType`), `url` (`string`) | Image or video item |
 | `Accessory` | `name` (`string`) | Vehicle accessory |
 | `OptionGroup` | `name` (`string`), `options` (`string[]`) | Named group of options |
-| `SpecificationGroup` | `name` (`string`), `specifications` (`Specification[]`) | Named group of specs |
-| `Specification` | `label` (`string`), `value` (`?string`), `formattedValue` (`?string`) | Single specification |
+| `SpecificationGroup` | `name`, `specifications`, `group` (`?string`), `iconName` (`?string`) | Named group of specs |
+| `Specification` | `label`, `value`, `formattedValue`, `hasValue` (`bool`), `formattedValueWithoutUnit` (`?string`) | Single specification |
 
 ## Enums
 
 | Enum | Cases |
 |---|---|
-| `MobilityType` | `Motor`, `Car`, `Bicycle`, `Camper` |
-| `CarBodyType` | `Hatchback`, `Sedan`, `SuvTerreinwagen`, `Stationwagen`, `Coupe`, `Mpv`, `Cabriolet`, `Bedrijfswagen`, `Personenbus`, `Pickup`, `Overig` |
-| `MotorcycleBodyType` | `AllRoad`, `Chopper`, `Classic`, `Crosser`, `Cruiser`, `Enduro`, `Minibike`, `Motorscooter`, `Naked`, `Quad`, `Racer`, `Rally`, `Sport`, `SportTouring`, `Supermotard`, `SuperSport`, `Tourer`, `TouringEnduro`, `Trial`, `Trike`, `Zijspan`, `Overig` |
-| `BicycleBodyType` | `Bakfiets`, `BmxFreestyleFiets`, `Crosshybride`, `Cruiserfiets`, `HybrideFiets`, `Jeugdfiets`, `Kinderfiets`, `Ligfiets`, `Mountainbike`, `Racefiets`, `Stadsfiets`, `Tandem`, `Vouwfiets`, `Overig` |
-| `CarFuelType` | `Benzine`, `Diesel`, `Hybride`, `Elektriciteit`, `Gas`, `Waterstof`, `Overige` |
-| `MotorcycleFuelType` | `Benzine`, `Elektriciteit`, `Overige` |
-| `BicycleFuelType` | `Elektriciteit`, `Overige` |
-| `TransmissionType` | `Handgeschakeld`, `Automatisch`, `SemiAutomatisch` |
-| `Condition` | `Occasion`, `Nieuw` |
-| `BovagWarranty` | `TwaalfMaanden`, `ZesMaanden`, `DrieMaanden` |
+| `MobilityType` | `Motorcycle`, `Car`, `Bicycle`, `Camper` |
+| `CarBodyType` | `Hatchback`, `Sedan`, `SuvOffRoad`, `StationWagon`, `Coupe`, `Mpv`, `Cabriolet`, `CommercialVehicle`, `PassengerBus`, `Pickup`, `Other` |
+| `MotorcycleBodyType` | `AllRoad`, `Chopper`, `Classic`, `Crosser`, `Cruiser`, `Enduro`, `Minibike`, `Motorscooter`, `Naked`, `Quad`, `Racer`, `Rally`, `Sport`, `SportTouring`, `Supermotard`, `SuperSport`, `Tourer`, `TouringEnduro`, `Trial`, `Trike`, `Sidecar`, `Other` |
+| `BicycleBodyType` | `CargoBike`, `BmxFreestyleBike`, `CrossHybrid`, `CruiserBike`, `HybridBike`, `YouthBike`, `ChildBike`, `RecumbentBike`, `Mountainbike`, `RoadBike`, `CityBike`, `Tandem`, `FoldingBike`, `Other` |
+| `CarFuelType` | `Petrol`, `Diesel`, `Hybrid`, `Electric`, `Gas`, `Hydrogen`, `Other` |
+| `MotorcycleFuelType` | `Petrol`, `Electric`, `Other` |
+| `BicycleFuelType` | `Electric`, `Other` |
+| `TransmissionType` | `Manual`, `Automatic`, `SemiAutomatic` |
+| `Condition` | `Used`, `New` |
+| `SortOrder` | `BestResult`, `LastAdded`, `PriceAscending`, `PriceDescending`, `YearDescending`, `YearAscending`, `MileageAscending`, `MileageDescending`, `Distance` |
+| `BovagWarranty` | `TwelveMonths`, `TwentyFourMonths`, `Manufacturer`, `Brand` |
 | `Distance` | `Five`, `Ten`, `Twenty`, `Thirty`, `Forty`, `Fifty`, `OneHundred`, `TwoHundred`, `ThreeHundred` |
 | `DriversLicense` | `A`, `A1`, `A2` |
-| `AvailableSince` | `Today`, `ThreeDays`, `SevenDays`, `FourteenDays` |
+| `AvailableSince` | `Today`, `Yesterday`, `TheDayBeforeYesterday`, `OneWeek`, `TwoWeeks`, `OneMonth` |
 | `AccessoryFilter` | `Airco`, `ClimateControl`, `AndroidAuto`, `AppleCarPlay`, `CruiseControl`, `AdaptiveCruiseControl`, `Navigation`, `ParkingSensors`, `HeatedSeats`, `LeatherInterior`, `Panoramicroof`, `Towbar`, `HeadUpDisplay`, `BlindSpotDetection` |
 | `DriveType` | `FrontWheel`, `RearWheel`, `FourWheel` |
+| `MileageUnit` | `Kilometer` |
 | `MediaType` | `Image`, `Video` |
 | `SeatCount` | `One` through `Nine` |
 | `GearCount` | `Five`, `Six`, `Seven`, `Eight`, `Nine` |
@@ -420,9 +586,13 @@ All errors throw exceptions that extend `ViaBOVAGException` (which extends `Runt
 ```php
 use NiekNijland\ViaBOVAG\Exception\ViaBOVAGException;
 use NiekNijland\ViaBOVAG\Exception\NotFoundException;
+use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\Brand;
 
 try {
-    $results = $client->search(new CarSearchCriteria(brand: 'toyota'));
+    $results = $client->search(new CarSearchCriteria(
+        brand: new Brand(slug: 'toyota', label: 'Toyota'),
+    ));
 } catch (NotFoundException $e) {
     // Resource not found (404) -- usually a stale build ID
     // The client retries automatically once before throwing this
@@ -444,7 +614,8 @@ composer test
 Other commands:
 
 ```bash
-composer test-coverage  # Run tests with coverage
+composer test-coverage  # Run tests with coverage (requires Xdebug/PCOV)
+composer test-integration # Run live integration suite without coverage
 composer format         # Format code with Laravel Pint
 composer analyse        # Run PHPStan (level 8)
 ```
@@ -458,9 +629,12 @@ use NiekNijland\ViaBOVAG\Testing\FakeViaBOVAG;
 use NiekNijland\ViaBOVAG\Testing\SearchResultFactory;
 use NiekNijland\ViaBOVAG\Testing\ListingFactory;
 use NiekNijland\ViaBOVAG\Testing\ListingDetailFactory;
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Exception\ViaBOVAGException;
 
 // Create a fake client (implements ViaBOVAGInterface)
-$fake = new FakeViaBOVAG();
+$fake = new FakeViaBOVAG;
 
 // Configure return values
 $fake->withSearchResult(SearchResultFactory::make([
@@ -474,7 +648,9 @@ $fake->withListingDetail(ListingDetailFactory::make([
 $fake->shouldThrow(new ViaBOVAGException('Connection failed'));
 
 // Use it like the real client
-$results = $fake->search(new CarSearchCriteria(brand: 'toyota'));
+$results = $fake->search(new CarSearchCriteria(
+    brand: new Brand(slug: 'toyota', label: 'Toyota'),
+));
 
 // Inspect recorded calls
 $fake->getCalls();              // All recorded calls
@@ -507,7 +683,7 @@ $detail = ListingDetailFactory::make();
 $result = SearchResultFactory::make(['totalCount' => 50]);
 
 // Create multiple listings
-$listings = ListingFactory::makeMany(5, ['brand' => 'Toyota']);
+$listings = ListingFactory::makeMany(5, ['title' => 'Toyota Corolla']);
 ```
 
 ## Changelog
@@ -516,12 +692,12 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Security Vulnerabilities
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+Please review [our security policy](https://github.com/NiekNijland/viabovag-php/security/policy) on how to report security vulnerabilities.
 
 ## Credits
 
 - [Niek Nijland](https://github.com/NiekNijland)
-- [All Contributors](../../contributors)
+- [All Contributors](https://github.com/NiekNijland/viabovag-php/contributors)
 
 ## License
 

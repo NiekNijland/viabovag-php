@@ -10,5 +10,7 @@ readonly class Specification
         public string $label,
         public ?string $value,
         public ?string $formattedValue,
+        public bool $hasValue = true,
+        public ?string $formattedValueWithoutUnit = null,
     ) {}
 }

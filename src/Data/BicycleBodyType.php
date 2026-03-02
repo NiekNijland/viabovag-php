@@ -6,20 +6,20 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum BicycleBodyType: string
 {
-    case Bakfiets = 'Bakfiets';
-    case BmxFreestyleFiets = 'BmxFreestyleFiets';
-    case Crosshybride = 'Crosshybride';
-    case Cruiserfiets = 'Cruiserfiets';
-    case HybrideFiets = 'HybrideFiets';
-    case Jeugdfiets = 'Jeugdfiets';
-    case Kinderfiets = 'Kinderfiets';
-    case Ligfiets = 'Ligfiets';
+    case CargoBike = 'Bakfiets';
+    case BmxFreestyleBike = 'BmxFreestyleFiets';
+    case CrossHybrid = 'Crosshybride';
+    case CruiserBike = 'Cruiserfiets';
+    case HybridBike = 'HybrideFiets';
+    case YouthBike = 'Jeugdfiets';
+    case ChildBike = 'Kinderfiets';
+    case RecumbentBike = 'Ligfiets';
     case Mountainbike = 'Mountainbike';
-    case Racefiets = 'Racefiets';
-    case Stadsfiets = 'Stadsfiets';
+    case RoadBike = 'Racefiets';
+    case CityBike = 'Stadsfiets';
     case Tandem = 'Tandem';
-    case Vouwfiets = 'Vouwfiets';
-    case Overig = 'Overig';
+    case FoldingBike = 'Vouwfiets';
+    case Other = 'Overig';
 
     public function slug(): string
     {

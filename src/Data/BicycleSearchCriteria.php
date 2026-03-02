@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace NiekNijland\ViaBOVAG\Data;
 
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
+use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
 
+/** @phpstan-consistent-constructor */
 readonly class BicycleSearchCriteria implements SearchQuery
 {
     use HasSharedFilterSlugs;
+    use HasWithPage;
 
     /**
      * @param  BicycleBodyType[]|null  $bodyTypes
@@ -17,8 +20,8 @@ readonly class BicycleSearchCriteria implements SearchQuery
      */
     public function __construct(
         // Core
-        public ?string $brand = null,
-        public ?string $model = null,
+        public ?Brand $brand = null,
+        public ?Model $model = null,
         public ?string $modelKeywords = null,
 
         // Pricing
@@ -51,13 +54,24 @@ readonly class BicycleSearchCriteria implements SearchQuery
         public ?string $postalCode = null,
         public ?Distance $distance = null,
 
+        // Bicycle-specific
+        public ?int $frameHeightFrom = null,
+        public ?int $frameHeightTo = null,
+        public ?FilterOption $frameMaterial = null,
+        public ?FilterOption $brakeType = null,
+        public ?bool $batteryRemovable = null,
+        public ?int $batteryCapacityFrom = null,
+        public ?int $batteryCapacityTo = null,
+        public ?FilterOption $engineBrand = null,
+        public ?FilterOption $specifiedBatteryRange = null,
+
         // BOVAG certifications
         public ?BovagWarranty $warranty = null,
         public ?bool $fullyServiced = null,
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
         public ?bool $hasBovagImportOdometerCheck = null,
-        public ?bool $carServicedOnDelivery = null,
+        public ?bool $servicedOnDelivery = null,
         public ?bool $hasNapWeblabel = null,
 
         // Financial
@@ -69,9 +83,14 @@ readonly class BicycleSearchCriteria implements SearchQuery
         public ?string $keywords = null,
         public ?AvailableSince $availableSince = null,
 
+        // Sorting
+        public ?SortOrder $sortOrder = null,
+
         // Pagination
         public int $page = 1,
-    ) {}
+    ) {
+        self::assertValidPage($page);
+    }
 
     public function mobilityType(): MobilityType
     {
@@ -100,6 +119,43 @@ readonly class BicycleSearchCriteria implements SearchQuery
             foreach ($this->fuelTypes as $fuelType) {
                 $filters[] = $fuelType->slug();
             }
+        }
+
+        // Bicycle-specific filters
+        if ($this->frameHeightFrom !== null) {
+            $filters[] = 'framehoogte-vanaf-'.$this->frameHeightFrom;
+        }
+
+        if ($this->frameHeightTo !== null) {
+            $filters[] = 'framehoogte-tot-en-met-'.$this->frameHeightTo;
+        }
+
+        if ($this->frameMaterial instanceof FilterOption) {
+            $filters[] = 'framemateriaal-'.$this->frameMaterial->slug;
+        }
+
+        if ($this->brakeType instanceof FilterOption) {
+            $filters[] = 'remtype-'.$this->brakeType->slug;
+        }
+
+        if ($this->batteryRemovable === true) {
+            $filters[] = 'batterij-verwijderbaar';
+        }
+
+        if ($this->batteryCapacityFrom !== null) {
+            $filters[] = 'batterijcapaciteit-vanaf-'.$this->batteryCapacityFrom;
+        }
+
+        if ($this->batteryCapacityTo !== null) {
+            $filters[] = 'batterijcapaciteit-tot-en-met-'.$this->batteryCapacityTo;
+        }
+
+        if ($this->engineBrand instanceof FilterOption) {
+            $filters[] = 'motormerk-'.$this->engineBrand->slug;
+        }
+
+        if ($this->specifiedBatteryRange instanceof FilterOption) {
+            $filters[] = 'opgegeven-bereik-'.$this->specifiedBatteryRange->slug;
         }
 
         return $filters;

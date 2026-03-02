@@ -6,16 +6,13 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum BovagWarranty: string
 {
-    case TwaalfMaanden = 'TwaalfMaanden';
-    case ZesMaanden = 'ZesMaanden';
-    case DrieMaanden = 'DrieMaanden';
+    case TwelveMonths = 'Bovag12maanden';
+    case TwentyFourMonths = 'Bovag24maanden';
+    case Manufacturer = 'Fabrieksgarantie';
+    case Brand = 'Merkgarantie';
 
     public function slug(): string
     {
-        return match ($this) {
-            self::TwaalfMaanden => 'bovag-garantie-12-maanden',
-            self::ZesMaanden => 'bovag-garantie-6-maanden',
-            self::DrieMaanden => 'bovag-garantie-3-maanden',
-        };
+        return strtolower($this->value);
     }
 }

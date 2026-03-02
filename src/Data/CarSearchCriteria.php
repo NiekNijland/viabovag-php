@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace NiekNijland\ViaBOVAG\Data;
 
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
+use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
 
+/** @phpstan-consistent-constructor */
 readonly class CarSearchCriteria implements SearchQuery
 {
     use HasSharedFilterSlugs;
+    use HasWithPage;
 
     /**
      * @param  CarBodyType[]|null  $bodyTypes
@@ -22,8 +25,8 @@ readonly class CarSearchCriteria implements SearchQuery
      */
     public function __construct(
         // Core
-        public ?string $brand = null,
-        public ?string $model = null,
+        public ?Brand $brand = null,
+        public ?Model $model = null,
         public ?string $modelKeywords = null,
 
         // Pricing
@@ -63,6 +66,7 @@ readonly class CarSearchCriteria implements SearchQuery
         // Location
         public ?string $postalCode = null,
         public ?Distance $distance = null,
+        public ?FilterOption $city = null,
 
         // BOVAG certifications
         public ?BovagWarranty $warranty = null,
@@ -70,26 +74,48 @@ readonly class CarSearchCriteria implements SearchQuery
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
         public ?bool $hasBovagImportOdometerCheck = null,
-        public ?bool $carServicedOnDelivery = null,
+        public ?bool $servicedOnDelivery = null,
         public ?bool $hasNapWeblabel = null,
 
         // Financial
         public ?bool $vatDeductible = null,
         public ?bool $isFinanceable = null,
         public ?bool $isImported = null,
+        public ?bool $isLeaseable = null,
 
         // Dimensions/weight
         public ?array $seatCounts = null,
         public ?int $emptyMassTo = null,
+        public ?int $doorCountFrom = null,
+        public ?int $doorCountTo = null,
+        public ?int $wheelSizeFrom = null,
+        public ?int $wheelSizeTo = null,
+        public ?int $brakedTowingWeightFrom = null,
+        public ?int $brakedTowingWeightTo = null,
+        public ?int $maximumMassTo = null,
+
+        // EV / Hybrid
+        public ?int $batteryCapacityFrom = null,
+        public ?int $batteryCapacityTo = null,
+        public ?int $maxChargingPowerHome = null,
+        public ?int $maxQuickChargingPower = null,
+        public ?bool $isPluginHybrid = null,
+        public ?FilterOption $energyLabel = null,
+        public ?FilterOption $specifiedBatteryRange = null,
 
         // Search
         public ?string $keywords = null,
         public ?array $accessories = null,
         public ?AvailableSince $availableSince = null,
 
+        // Sorting
+        public ?SortOrder $sortOrder = null,
+
         // Pagination
         public int $page = 1,
-    ) {}
+    ) {
+        self::assertValidPage($page);
+    }
 
     public function mobilityType(): MobilityType
     {
@@ -172,6 +198,72 @@ readonly class CarSearchCriteria implements SearchQuery
 
         if ($this->emptyMassTo !== null) {
             $filters[] = 'gewicht-tot-en-met-'.$this->emptyMassTo;
+        }
+
+        // Car-specific filters
+        if ($this->city instanceof FilterOption) {
+            $filters[] = 'stad-'.$this->city->slug;
+        }
+
+        if ($this->isLeaseable === true) {
+            $filters[] = 'online-te-leasen';
+        }
+
+        if ($this->doorCountFrom !== null) {
+            $filters[] = 'deuren-vanaf-'.$this->doorCountFrom;
+        }
+
+        if ($this->doorCountTo !== null) {
+            $filters[] = 'deuren-tot-en-met-'.$this->doorCountTo;
+        }
+
+        if ($this->wheelSizeFrom !== null) {
+            $filters[] = 'wielmaat-vanaf-'.$this->wheelSizeFrom;
+        }
+
+        if ($this->wheelSizeTo !== null) {
+            $filters[] = 'wielmaat-tot-en-met-'.$this->wheelSizeTo;
+        }
+
+        if ($this->brakedTowingWeightFrom !== null) {
+            $filters[] = 'geremde-aanhangermassa-vanaf-'.$this->brakedTowingWeightFrom;
+        }
+
+        if ($this->brakedTowingWeightTo !== null) {
+            $filters[] = 'geremde-aanhangermassa-tot-en-met-'.$this->brakedTowingWeightTo;
+        }
+
+        if ($this->maximumMassTo !== null) {
+            $filters[] = 'maximale-massa-tot-en-met-'.$this->maximumMassTo;
+        }
+
+        // EV / Hybrid filters
+        if ($this->batteryCapacityFrom !== null) {
+            $filters[] = 'batterijcapaciteit-vanaf-'.$this->batteryCapacityFrom;
+        }
+
+        if ($this->batteryCapacityTo !== null) {
+            $filters[] = 'batterijcapaciteit-tot-en-met-'.$this->batteryCapacityTo;
+        }
+
+        if ($this->maxChargingPowerHome !== null) {
+            $filters[] = 'max-laadvermogen-thuis-vanaf-'.$this->maxChargingPowerHome;
+        }
+
+        if ($this->maxQuickChargingPower !== null) {
+            $filters[] = 'max-snellaadvermogen-vanaf-'.$this->maxQuickChargingPower;
+        }
+
+        if ($this->isPluginHybrid === true) {
+            $filters[] = 'plug-in-hybride';
+        }
+
+        if ($this->energyLabel instanceof FilterOption) {
+            $filters[] = 'energielabel-'.$this->energyLabel->slug;
+        }
+
+        if ($this->specifiedBatteryRange instanceof FilterOption) {
+            $filters[] = 'opgegeven-bereik-'.$this->specifiedBatteryRange->slug;
         }
 
         return $filters;

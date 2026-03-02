@@ -11,7 +11,12 @@ use NiekNijland\ViaBOVAG\Data\Listing;
 use NiekNijland\ViaBOVAG\Data\ListingDetail;
 use NiekNijland\ViaBOVAG\Data\Media;
 use NiekNijland\ViaBOVAG\Data\MediaType;
+use NiekNijland\ViaBOVAG\Data\MileageUnit;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
 use NiekNijland\ViaBOVAG\Data\OptionGroup;
+use NiekNijland\ViaBOVAG\Data\SearchFacet;
+use NiekNijland\ViaBOVAG\Data\SearchFacetOption;
+use NiekNijland\ViaBOVAG\Data\SearchFacetOptionCategory;
 use NiekNijland\ViaBOVAG\Data\SearchResult;
 use NiekNijland\ViaBOVAG\Data\Specification;
 use NiekNijland\ViaBOVAG\Data\SpecificationGroup;
@@ -22,6 +27,8 @@ class JsonParser
 {
     /**
      * Extract the Next.js build ID from an HTML page.
+     *
+     * @throws ViaBOVAGException if the build ID cannot be found in the HTML
      */
     public function extractBuildId(string $html): string
     {
@@ -34,6 +41,8 @@ class JsonParser
 
     /**
      * Parse a search results JSON response into a SearchResult DTO.
+     *
+     * @throws ViaBOVAGException if the JSON is invalid or missing expected structure
      */
     public function parseSearchResults(string $json, int $currentPage): SearchResult
     {
@@ -50,15 +59,34 @@ class JsonParser
             $serverResults['results'] ?? [],
         );
 
+        $facets = $this->mapFacets($data['pageProps']['serverSearchFacets'] ?? null);
+
         return new SearchResult(
             listings: $listings,
             totalCount: (int) ($serverResults['count'] ?? 0),
             currentPage: $currentPage,
+            facets: $facets,
         );
     }
 
     /**
+     * Parse only facet data from a search response.
+     *
+     * @return SearchFacet[]
+     *
+     * @throws ViaBOVAGException if the JSON is invalid
+     */
+    public function parseSearchFacets(string $json): array
+    {
+        $data = $this->decodeJson($json);
+
+        return $this->mapFacets($data['pageProps']['serverSearchFacets'] ?? null);
+    }
+
+    /**
      * Parse a vehicle detail JSON response into a ListingDetail DTO.
+     *
+     * @throws ViaBOVAGException if the JSON is invalid or missing expected structure
      */
     public function parseDetail(string $json): ListingDetail
     {
@@ -73,6 +101,8 @@ class JsonParser
         $advertisement = $vehicleData['advertisement'] ?? [];
         $vehicleSpecs = $vehicleData['vehicle'] ?? [];
         $identification = $vehicleSpecs['identification'] ?? [];
+        $financial = $vehicleSpecs['financial'] ?? [];
+        $certainties = $advertisement['certainties'] ?? [];
 
         $media = array_map(
             fn (array $item): Media => new Media(
@@ -88,11 +118,15 @@ class JsonParser
                 specifications: array_map(
                     fn (array $spec): Specification => new Specification(
                         label: $spec['label'] ?? '',
-                        value: $spec['value'] ?? null,
+                        value: isset($spec['value']) && is_string($spec['value']) ? $spec['value'] : null,
                         formattedValue: $spec['formattedValue'] ?? null,
+                        hasValue: (bool) ($spec['hasValue'] ?? false),
+                        formattedValueWithoutUnit: $spec['formattedValueWithoutUnit'] ?? null,
                     ),
                     $group['specifications'] ?? [],
                 ),
+                group: $group['group'] ?? null,
+                iconName: $group['iconName'] ?? null,
             ),
             $vehicleSpecs['specificationGroups'] ?? [],
         );
@@ -120,6 +154,16 @@ class JsonParser
         $title = $this->extractFormattedValue($advertisement['title'] ?? '');
         $price = $this->extractPriceFromDetail($advertisement['price'] ?? 0);
 
+        // Financial data from the vehicle section
+        $leasePrice = $this->extractPriceOrNull($financial['leasePrice'] ?? null);
+        $roadTax = $this->extractPriceOrNull($financial['roadTax'] ?? null);
+        $fuelConsumption = $this->extractFormattedValueOrNull($financial['fuelConsumption'] ?? null);
+        $bijtellingPercentage = $this->extractFormattedValueOrNull($financial['bijtellingPercentage'] ?? null);
+
+        // Financing provider
+        $financing = $advertisement['financing'] ?? $financial['financing'] ?? null;
+        $financingProvider = is_array($financing) ? ($financing['provider'] ?? null) : null;
+
         return new ListingDetail(
             id: $vehicleData['id'] ?? '',
             title: $title,
@@ -134,6 +178,16 @@ class JsonParser
             licensePlate: $this->extractFormattedValueOrNull($identification['vehicleLicencePlate'] ?? null),
             externalNumber: $this->extractFormattedValueOrNull($identification['vehicleNumberExternal'] ?? null),
             structuredData: $vehicleData['structuredData'] ?? null,
+            priceExcludesVat: (bool) ($advertisement['priceExcludesVat'] ?? false),
+            url: $vehicleData['url'] ?? null,
+            mobilityType: MobilityType::fromApiValue($vehicleData['mobilityType'] ?? ''),
+            isEligibleForVehicleReport: (bool) ($advertisement['isEligibleForVehicleReport'] ?? false),
+            financingProvider: $financingProvider,
+            leasePrice: $leasePrice,
+            roadTax: $roadTax,
+            fuelConsumption: $fuelConsumption,
+            bijtellingPercentage: $bijtellingPercentage,
+            returnWarrantyMileage: isset($certainties['returnWarrantyMileage']) ? (int) $certainties['returnWarrantyMileage'] : null,
         );
     }
 
@@ -147,7 +201,7 @@ class JsonParser
 
         return new Listing(
             id: $item['id'] ?? '',
-            mobilityType: $item['mobilityType'] ?? '',
+            mobilityType: MobilityType::fromApiValue($item['mobilityType'] ?? '') ?? throw new ViaBOVAGException('Unknown mobility type: '.($item['mobilityType'] ?? '')),
             url: $item['url'] ?? '',
             friendlyUriPart: $item['friendlyUriPart'] ?? '',
             externalAdvertisementUrl: $item['externalAdvertisementUrl'] ?? null,
@@ -160,7 +214,7 @@ class JsonParser
                 brand: $vehicleData['brand'] ?? '',
                 model: $vehicleData['model'] ?? '',
                 mileage: (int) ($vehicleData['mileage'] ?? 0),
-                mileageUnit: $vehicleData['mileageUnit'] ?? 'kilometer',
+                mileageUnit: MileageUnit::tryFrom($vehicleData['mileageUnit'] ?? 'kilometer') ?? MileageUnit::Kilometer,
                 year: (int) ($vehicleData['year'] ?? 0),
                 month: isset($vehicleData['month']) ? (int) $vehicleData['month'] : null,
                 fuelTypes: $vehicleData['fuelTypes'] ?? [],
@@ -184,6 +238,7 @@ class JsonParser
                 websiteUrl: $companyData['websiteUrl'] ?? null,
                 callTrackingCode: $companyData['callTrackingCode'] ?? null,
             ),
+            priceExcludesVat: (bool) ($item['priceExcludesVat'] ?? false),
         );
     }
 
@@ -209,6 +264,14 @@ class JsonParser
             longitude: isset($coordinates['longitude']) ? (float) $coordinates['longitude'] : null,
             reviewScore: isset($review['rating']) ? (float) $review['rating'] : null,
             reviewCount: isset($review['numberOfReviews']) ? (int) $review['numberOfReviews'] : null,
+            id: isset($data['id']) ? (int) $data['id'] : null,
+            houseNumber: $address['houseNumber'] ?? null,
+            houseNumberExtension: isset($address['houseNumberExtension']) && $address['houseNumberExtension'] !== ''
+                ? $address['houseNumberExtension']
+                : null,
+            countryCode: $address['countryCode'] ?? null,
+            isOpenNow: isset($contact['isOpenNow']) ? (bool) $contact['isOpenNow'] : null,
+            reviewProvider: $review['provider'] ?? null,
         );
     }
 
@@ -221,28 +284,174 @@ class JsonParser
         $technical = $specs['technical'] ?? [];
         $history = $specs['history'] ?? [];
         $performance = $specs['performance'] ?? [];
+        $fuel = $specs['fuel'] ?? [];
+        $dimensions = $specs['dimensions'] ?? [];
+        $weight = $specs['weight'] ?? [];
+        $interior = $specs['interior'] ?? [];
+        $certainties = $specs['certainties'] ?? [];
+
+        // Build fuelTypes from detail response fuel section
+        $fuelTypes = [];
+        $primaryFuelType = $this->extractFormattedValueOrNull($fuel['primaryFuelType'] ?? null);
+        $secondaryFuelType = $this->extractFormattedValueOrNull($fuel['secondaryFuelType'] ?? null);
+
+        if ($primaryFuelType !== null) {
+            $fuelTypes[] = $primaryFuelType;
+        }
+
+        if ($secondaryFuelType !== null) {
+            $fuelTypes[] = $secondaryFuelType;
+        }
+
+        // Derive bovagWarranty from certaintyKeys
+        $certaintyKeys = $specs['certaintyKeys'] ?? [];
+        $bovagWarranty = $this->deriveBovagWarrantyFromKeys($certaintyKeys);
+
+        // Derive warranties from certaintyKeys
+        $warranties = $this->deriveWarrantiesFromKeys($certaintyKeys);
 
         return new Vehicle(
             type: $this->extractValue($general['vehicleType'] ?? null) ?? '',
             brand: $this->extractFormattedValue($general['brand'] ?? ''),
             model: $this->extractFormattedValue($general['model'] ?? ''),
             mileage: $this->extractNumericValue($history['mileage'] ?? null) ?? 0,
-            mileageUnit: 'kilometer',
+            mileageUnit: MileageUnit::Kilometer,
             year: $this->extractNumericValue($history['productionYear'] ?? null) ?? 0,
             month: $this->extractNumericValue($history['productionMonth'] ?? null),
-            fuelTypes: [],
+            fuelTypes: $fuelTypes,
             color: $this->extractColorFromSpecs($specs['specificationGroups'] ?? []),
             bodyType: $this->extractValue($general['bodyType'] ?? null),
             transmissionType: $this->extractFormattedValueOrNull($technical['transmission'] ?? null),
             engineCapacity: $this->extractNumericValue($technical['engineCapacity'] ?? null),
             enginePower: $this->extractNumericValue($performance['enginePower'] ?? null),
-            warranties: [],
-            certaintyKeys: $specs['certaintyKeys'] ?? [],
-            fullyServiced: $this->extractBoolValue($specs['certainties']['isFullyMaintained'] ?? null) ?? false,
-            hasBovagChecklist: in_array('BovagChecklist40Point', $specs['certaintyKeys'] ?? []),
-            bovagWarranty: null,
-            hasReturnWarranty: in_array('ReturnWarranty', $specs['certaintyKeys'] ?? []),
-            servicedOnDelivery: in_array('CarServicedOnDelivery', $specs['certaintyKeys'] ?? []),
+            warranties: $warranties,
+            certaintyKeys: $certaintyKeys,
+            fullyServiced: $this->extractBoolValue($certainties['isFullyMaintained'] ?? null) ?? false,
+            hasBovagChecklist: in_array('BovagChecklist40Point', $certaintyKeys),
+            bovagWarranty: $bovagWarranty,
+            hasReturnWarranty: in_array('ReturnWarranty', $certaintyKeys),
+            servicedOnDelivery: in_array('CarServicedOnDelivery', $certaintyKeys),
+            edition: $this->extractFormattedValueOrNull($general['edition'] ?? null),
+            condition: $this->extractValue($general['condition'] ?? null),
+            modelYear: $this->extractNumericValue($general['modelYear'] ?? null),
+            frameType: $this->extractFormattedValueOrNull($general['frameType'] ?? null),
+            primaryFuelType: $this->extractValue($fuel['primaryFuelType'] ?? null),
+            secondaryFuelType: $this->extractValue($fuel['secondaryFuelType'] ?? null),
+            isHybridVehicle: $this->extractBoolValue($fuel['isHybridVehicle'] ?? null),
+            energyLabel: $this->extractFormattedValueOrNull($fuel['energyLabel'] ?? null),
+            fuelConsumptionCombined: $this->extractFormattedValueOrNull($fuel['fuelConsumptionCombined'] ?? null),
+            gearCount: $this->extractNumericValue($technical['gearCount'] ?? null),
+            isImported: $this->extractBoolValue($history['isImported'] ?? null),
+            hasNapLabel: $this->extractBoolValue($certainties['hasNapLabel'] ?? null),
+            wheelSize: $this->extractFormattedValueOrNull($dimensions['wheelSize'] ?? null),
+            emptyWeight: $this->extractNumericValue($weight['emptyWeight'] ?? null),
+            maxWeight: $this->extractNumericValue($weight['maxWeight'] ?? null),
+            bedCount: $this->extractNumericValue($interior['bedCount'] ?? null),
+            sanitary: $this->extractFormattedValueOrNull($interior['sanitary'] ?? null),
+        );
+    }
+
+    /**
+     * Derive the BOVAG warranty tier from certainty keys.
+     *
+     * @param  string[]  $certaintyKeys
+     */
+    private function deriveBovagWarrantyFromKeys(array $certaintyKeys): ?string
+    {
+        foreach ($certaintyKeys as $key) {
+            if (str_starts_with($key, 'BovagWarranty')) {
+                return match ($key) {
+                    'BovagWarranty12Months' => 'TwaalfMaanden',
+                    'BovagWarranty6Months' => 'ZesMaanden',
+                    'BovagWarranty3Months' => 'DrieMaanden',
+                    default => $key,
+                };
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Derive warranty slugs from certainty keys.
+     *
+     * @param  string[]  $certaintyKeys
+     * @return string[]
+     */
+    private function deriveWarrantiesFromKeys(array $certaintyKeys): array
+    {
+        $warranties = [];
+        foreach ($certaintyKeys as $key) {
+            $warranty = match ($key) {
+                'BovagWarranty12Months' => 'bovag12maanden',
+                'BovagWarranty6Months' => 'bovag6maanden',
+                'BovagWarranty3Months' => 'bovag3maanden',
+                default => null,
+            };
+            if ($warranty !== null) {
+                $warranties[] = $warranty;
+            }
+        }
+
+        return $warranties;
+    }
+
+    /**
+     * Map search facets from the server response.
+     *
+     * @param  array<string, mixed>|null  $facetData
+     * @return SearchFacet[]
+     */
+    private function mapFacets(?array $facetData): array
+    {
+        if ($facetData === null) {
+            return [];
+        }
+
+        $rawFacets = $facetData['facets'] ?? [];
+
+        return array_map(
+            function (array $facet): SearchFacet {
+                $options = array_map(
+                    fn (array $option): SearchFacetOption => new SearchFacetOption(
+                        name: $option['name'] ?? '',
+                        label: $option['label'] ?? '',
+                        count: isset($option['count']) ? (int) $option['count'] : null,
+                        selected: (bool) ($option['selected'] ?? false),
+                    ),
+                    $facet['options'] ?? [],
+                );
+
+                $optionCategories = array_map(
+                    fn (array $category): SearchFacetOptionCategory => new SearchFacetOptionCategory(
+                        label: $category['label'] ?? '',
+                        options: array_map(
+                            fn (array $option): SearchFacetOption => new SearchFacetOption(
+                                name: $option['name'] ?? '',
+                                label: $option['label'] ?? '',
+                                count: isset($option['count']) ? (int) $option['count'] : null,
+                                selected: (bool) ($option['selected'] ?? false),
+                            ),
+                            $category['options'] ?? [],
+                        ),
+                    ),
+                    $facet['optionCategories'] ?? [],
+                );
+
+                return new SearchFacet(
+                    name: $facet['name'] ?? '',
+                    label: $facet['label'] ?? '',
+                    disabled: (bool) ($facet['disabled'] ?? false),
+                    selected: (bool) ($facet['selected'] ?? false),
+                    hidden: (bool) ($facet['hidden'] ?? false),
+                    options: $options,
+                    optionCategories: $optionCategories,
+                    selectedValues: $facet['selectedValues'] ?? [],
+                    tooltip: $facet['tooltip'] ?? null,
+                    hasIcons: (bool) ($facet['hasIcons'] ?? false),
+                );
+            },
+            $rawFacets,
         );
     }
 
@@ -373,10 +582,38 @@ class JsonParser
             return $price;
         }
 
-        // Parse Dutch price format: "€ 19.850,-" or "19.850,50"
-        // Dutch format uses dots as thousands separators and commas as decimal separators.
-        // Strip the currency symbol/whitespace, replace dots (thousands sep), parse as numeric.
-        $formatted = (string) ($price['formattedValueWithoutUnit'] ?? $price['formattedValue'] ?? '0');
+        return $this->parseDutchPrice($price);
+    }
+
+    /**
+     * Extract a price from a structured field, returning null if no value.
+     *
+     * @param  array<string, mixed>|null  $field
+     */
+    private function extractPriceOrNull(?array $field): ?int
+    {
+        if ($field === null) {
+            return null;
+        }
+
+        if (! ($field['hasValue'] ?? false)) {
+            return null;
+        }
+
+        return $this->parseDutchPrice($field);
+    }
+
+    /**
+     * Parse a Dutch price format from a structured field.
+     *
+     * Handles formats like "€ 19.850,-" or "19.850,50".
+     * Dutch format uses dots as thousands separators and commas as decimal separators.
+     *
+     * @param  array<string, mixed>  $field
+     */
+    private function parseDutchPrice(array $field): int
+    {
+        $formatted = (string) ($field['formattedValueWithoutUnit'] ?? $field['formattedValue'] ?? '0');
 
         // Remove currency symbol and whitespace
         $cleaned = preg_replace('/[€\s]/', '', $formatted);

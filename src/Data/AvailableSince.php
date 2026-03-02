@@ -6,10 +6,12 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum AvailableSince: string
 {
-    case Today = 'today';
-    case ThreeDays = 'threedays';
-    case SevenDays = 'sevendays';
-    case FourteenDays = 'fourteendays';
+    case Today = 'vandaag';
+    case Yesterday = 'gisteren';
+    case TheDayBeforeYesterday = 'eergisteren';
+    case OneWeek = 'een-week';
+    case TwoWeeks = 'twee-weken';
+    case OneMonth = 'een-maand';
 
     public function slug(): string
     {

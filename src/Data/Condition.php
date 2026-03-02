@@ -6,11 +6,11 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum Condition: string
 {
-    case Occasion = 'Occasion';
-    case Nieuw = 'Nieuw';
+    case Used = 'Occasion';
+    case New = 'Nieuw';
 
     public function slug(): string
     {
-        return 'staat-'.strtolower($this->value);
+        return strtolower($this->value);
     }
 }

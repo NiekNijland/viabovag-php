@@ -6,16 +6,19 @@ namespace NiekNijland\ViaBOVAG\Data\Concerns;
 
 use NiekNijland\ViaBOVAG\Data\AvailableSince;
 use NiekNijland\ViaBOVAG\Data\BovagWarranty;
+use NiekNijland\ViaBOVAG\Data\Brand;
 use NiekNijland\ViaBOVAG\Data\Condition;
 use NiekNijland\ViaBOVAG\Data\Distance;
+use NiekNijland\ViaBOVAG\Data\Model;
+use NiekNijland\ViaBOVAG\Data\SortOrder;
 
 /**
  * Shared filter slug generation for properties common across all mobility types.
  *
  * Expects the using class to define the following public properties:
  *
- * @property ?string $brand
- * @property ?string $model
+ * @property ?Brand $brand
+ * @property ?Model $model
  * @property ?string $modelKeywords
  * @property ?int $priceFrom
  * @property ?int $priceTo
@@ -38,16 +41,26 @@ use NiekNijland\ViaBOVAG\Data\Distance;
  * @property ?bool $hasBovagChecklist
  * @property ?bool $hasBovagMaintenanceFree
  * @property ?bool $hasBovagImportOdometerCheck
- * @property ?bool $carServicedOnDelivery
+ * @property ?bool $servicedOnDelivery
  * @property ?bool $hasNapWeblabel
  * @property ?bool $vatDeductible
  * @property ?bool $isFinanceable
  * @property ?bool $isImported
  * @property ?string $keywords
  * @property ?AvailableSince $availableSince
+ * @property ?SortOrder $sortOrder
  */
 trait HasSharedFilterSlugs
 {
+    /**
+     * Normalize a free-text value into a URL-safe filter slug.
+     * Converts to lowercase and replaces whitespace with hyphens.
+     */
+    protected function slugify(string $value): string
+    {
+        return (string) preg_replace('/\s+/', '-', strtolower(trim($value)));
+    }
+
     /**
      * @return string[]
      */
@@ -55,16 +68,16 @@ trait HasSharedFilterSlugs
     {
         $filters = [];
 
-        if ($this->brand !== null) {
-            $filters[] = 'merk-'.strtolower($this->brand);
+        if ($this->brand instanceof Brand) {
+            $filters[] = 'merk-'.$this->brand->slug;
         }
 
-        if ($this->model !== null) {
-            $filters[] = 'model-'.strtolower($this->model);
+        if ($this->model instanceof Model) {
+            $filters[] = 'model-'.$this->model->slug;
         }
 
         if ($this->modelKeywords !== null) {
-            $filters[] = 'model-trefwoorden-'.strtolower($this->modelKeywords);
+            $filters[] = 'model-trefwoorden-'.$this->slugify($this->modelKeywords);
         }
 
         if ($this->priceFrom !== null) {
@@ -117,7 +130,7 @@ trait HasSharedFilterSlugs
 
         if ($this->colors !== null) {
             foreach ($this->colors as $color) {
-                $filters[] = 'kleur-'.strtolower((string) $color);
+                $filters[] = 'kleur-'.$this->slugify((string) $color);
             }
         }
 
@@ -129,16 +142,12 @@ trait HasSharedFilterSlugs
             $filters[] = 'postcode-'.$this->postalCode;
         }
 
-        if ($this->distance !== null) {
-            $filters[] = $this->distance->slug();
-        }
-
         if ($this->warranty !== null) {
             $filters[] = $this->warranty->slug();
         }
 
         if ($this->keywords !== null) {
-            $filters[] = 'trefwoorden-'.strtolower($this->keywords);
+            $filters[] = 'trefwoorden-'.$this->slugify($this->keywords);
         }
 
         if ($this->availableSince !== null) {
@@ -166,7 +175,7 @@ trait HasSharedFilterSlugs
             $filters[] = 'import-teller-check';
         }
 
-        if ($this->carServicedOnDelivery === true) {
+        if ($this->servicedOnDelivery === true) {
             $filters[] = 'afleverbeurt';
         }
 
@@ -182,6 +191,10 @@ trait HasSharedFilterSlugs
             $filters[] = 'import-ja';
         } elseif ($this->isImported === false) {
             $filters[] = 'import-nee';
+        }
+
+        if ($this->sortOrder !== null) {
+            $filters[] = $this->sortOrder->slug();
         }
 
         return $filters;

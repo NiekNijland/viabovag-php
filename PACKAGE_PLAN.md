@@ -99,12 +99,12 @@ pageProps.vehicle.structuredData           → JSON-LD string with raw numeric v
 
 | Enum | Values |
 |---|---|
-| MobilityType | `motor`, `car`, `bicycle`, `caramper` |
+| MobilityType | `motor`, `auto`, `fiets`, `camper` |
 | BodyType (motorcycle) | `AllRoad`, `Chopper`, `Classic`, `Crosser`, `Cruiser`, `Enduro`, `Minibike`, `Motorscooter`, `Naked`, `Overig`, `Quad`, `Racer`, `Rally`, `Sport`, `SportTouring`, `Supermotard`, `SuperSport`, `Tourer`, `TouringEnduro`, `Trial`, `Trike`, `Zijspan` |
 | FuelType | `Benzine`, `Diesel`, `Elektrisch`, `LPG`, `CNG` |
-| TransmissionType | `Handgeschakeld`, `Automaat`, `Semi-automaat` |
+| TransmissionType | `Handgeschakeld`, `Automatisch`, `SemiAutomatisch` |
 | Condition | `Occasion`, `Nieuw` |
-| BovagWarranty | `TwaalfMaanden`, `ZesMaanden`, `DrieMaanden` |
+| BovagWarranty | `Bovag12maanden`, `Bovag24maanden`, `Fabrieksgarantie`, `Merkgarantie` |
 | MileageUnit | `kilometer` |
 | DriversLicense | `A`, `A1`, `A2` |
 | Distance | `Five`, `Ten`, `Twenty`, `Thirty`, `Forty`, `Fifty`, `OneHundred`, `TwoHundred`, `ThreeHundred` |
@@ -298,7 +298,7 @@ readonly class SearchCriteria
         public ?bool $hasBovagMaintenanceFree = null,
         public ?bool $hasNapOrBit = null,
         public ?bool $hasBovagImportOdometerCheck = null,
-        public ?bool $carServicedOnDelivery = null,
+        public ?bool $servicedOnDelivery = null,
         public ?bool $hasNapWeblabel = null,
 
         // Financial
@@ -357,7 +357,7 @@ readonly class SearchCriteria
 | Motor | `motoren` | `motor` |
 | Car | `auto` | `auto` |
 | Bicycle | `fietsen` | `fiets` |
-| Camper | `campers` | `camper` |
+| Camper | `camper` | `camper` |
 
 ---
 

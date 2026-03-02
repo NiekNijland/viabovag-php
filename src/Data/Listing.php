@@ -8,7 +8,7 @@ readonly class Listing
 {
     public function __construct(
         public string $id,
-        public string $mobilityType,
+        public MobilityType $mobilityType,
         public string $url,
         public string $friendlyUriPart,
         public ?string $externalAdvertisementUrl,
@@ -18,5 +18,6 @@ readonly class Listing
         public bool $isFinanceable,
         public Vehicle $vehicle,
         public Company $company,
+        public bool $priceExcludesVat = false,
     ) {}
 }

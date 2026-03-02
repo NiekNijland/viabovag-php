@@ -26,8 +26,8 @@ enum MotorcycleBodyType: string
     case TouringEnduro = 'TouringEnduro';
     case Trial = 'Trial';
     case Trike = 'Trike';
-    case Zijspan = 'Zijspan';
-    case Overig = 'Overig';
+    case Sidecar = 'Zijspan';
+    case Other = 'Overig';
 
     public function slug(): string
     {

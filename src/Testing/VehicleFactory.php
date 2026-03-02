@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG\Testing;
 
+use NiekNijland\ViaBOVAG\Data\MileageUnit;
 use NiekNijland\ViaBOVAG\Data\Vehicle;
 
 class VehicleFactory
@@ -18,7 +19,7 @@ class VehicleFactory
             'brand' => 'Suzuki',
             'model' => 'GSX-R 1300 Hayabusa',
             'mileage' => 15469,
-            'mileageUnit' => 'kilometer',
+            'mileageUnit' => MileageUnit::Kilometer,
             'year' => 2018,
             'month' => 5,
             'fuelTypes' => [],
@@ -34,6 +35,23 @@ class VehicleFactory
             'bovagWarranty' => 'TwaalfMaanden',
             'hasReturnWarranty' => true,
             'servicedOnDelivery' => true,
+            'edition' => null,
+            'condition' => null,
+            'modelYear' => null,
+            'frameType' => null,
+            'primaryFuelType' => null,
+            'secondaryFuelType' => null,
+            'isHybridVehicle' => null,
+            'energyLabel' => null,
+            'fuelConsumptionCombined' => null,
+            'gearCount' => null,
+            'isImported' => null,
+            'hasNapLabel' => null,
+            'wheelSize' => null,
+            'emptyWeight' => null,
+            'maxWeight' => null,
+            'bedCount' => null,
+            'sanitary' => null,
         ];
 
         $data = array_merge($defaults, $overrides);
@@ -59,6 +77,23 @@ class VehicleFactory
             bovagWarranty: $data['bovagWarranty'],
             hasReturnWarranty: $data['hasReturnWarranty'],
             servicedOnDelivery: $data['servicedOnDelivery'],
+            edition: $data['edition'],
+            condition: $data['condition'],
+            modelYear: $data['modelYear'],
+            frameType: $data['frameType'],
+            primaryFuelType: $data['primaryFuelType'],
+            secondaryFuelType: $data['secondaryFuelType'],
+            isHybridVehicle: $data['isHybridVehicle'],
+            energyLabel: $data['energyLabel'],
+            fuelConsumptionCombined: $data['fuelConsumptionCombined'],
+            gearCount: $data['gearCount'],
+            isImported: $data['isImported'],
+            hasNapLabel: $data['hasNapLabel'],
+            wheelSize: $data['wheelSize'],
+            emptyWeight: $data['emptyWeight'],
+            maxWeight: $data['maxWeight'],
+            bedCount: $data['bedCount'],
+            sanitary: $data['sanitary'],
         );
     }
 }

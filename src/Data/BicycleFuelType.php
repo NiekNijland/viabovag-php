@@ -6,8 +6,8 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum BicycleFuelType: string
 {
-    case Elektriciteit = 'Elektriciteit';
-    case Overige = 'Overige';
+    case Electric = 'Elektriciteit';
+    case Other = 'Overige';
 
     public function slug(): string
     {

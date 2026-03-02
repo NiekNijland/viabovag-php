@@ -25,6 +25,12 @@ class CompanyFactory
             'longitude' => null,
             'reviewScore' => null,
             'reviewCount' => null,
+            'id' => null,
+            'houseNumber' => null,
+            'houseNumberExtension' => null,
+            'countryCode' => null,
+            'isOpenNow' => null,
+            'reviewProvider' => null,
         ];
 
         $data = array_merge($defaults, $overrides);
@@ -41,6 +47,12 @@ class CompanyFactory
             longitude: $data['longitude'],
             reviewScore: $data['reviewScore'],
             reviewCount: $data['reviewCount'],
+            id: $data['id'],
+            houseNumber: $data['houseNumber'],
+            houseNumberExtension: $data['houseNumberExtension'],
+            countryCode: $data['countryCode'],
+            isOpenNow: $data['isOpenNow'],
+            reviewProvider: $data['reviewProvider'],
         );
     }
 }

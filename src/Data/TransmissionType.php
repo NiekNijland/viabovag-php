@@ -6,9 +6,9 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum TransmissionType: string
 {
-    case Handgeschakeld = 'Handgeschakeld';
-    case Automatisch = 'Automatisch';
-    case SemiAutomatisch = 'SemiAutomatisch';
+    case Manual = 'Handgeschakeld';
+    case Automatic = 'Automatisch';
+    case SemiAutomatic = 'SemiAutomatisch';
 
     public function slug(): string
     {

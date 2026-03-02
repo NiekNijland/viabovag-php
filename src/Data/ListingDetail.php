@@ -27,5 +27,15 @@ readonly class ListingDetail
         public ?string $licensePlate,
         public ?string $externalNumber,
         public array|string|null $structuredData,
+        public bool $priceExcludesVat = false,
+        public ?string $url = null,
+        public ?MobilityType $mobilityType = null,
+        public bool $isEligibleForVehicleReport = false,
+        public ?string $financingProvider = null,
+        public ?int $leasePrice = null,
+        public ?int $roadTax = null,
+        public ?string $fuelConsumption = null,
+        public ?string $bijtellingPercentage = null,
+        public ?int $returnWarrantyMileage = null,
     ) {}
 }

@@ -18,5 +18,11 @@ readonly class Company
         public ?float $longitude = null,
         public ?float $reviewScore = null,
         public ?int $reviewCount = null,
+        public ?int $id = null,
+        public ?string $houseNumber = null,
+        public ?string $houseNumberExtension = null,
+        public ?string $countryCode = null,
+        public ?bool $isOpenNow = null,
+        public ?string $reviewProvider = null,
     ) {}
 }

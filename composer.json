@@ -5,7 +5,7 @@
         "NiekNijland",
         "viabovag"
     ],
-    "homepage": "https://github.com/nieknijland/viabovag",
+    "homepage": "https://github.com/nieknijland/viabovag-php",
     "license": "MIT",
     "authors": [
         {
@@ -37,8 +37,9 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage",
+        "test": "vendor/bin/phpunit --testsuite Unit --no-coverage",
+        "test-coverage": "vendor/bin/phpunit --testsuite Unit --coverage-clover build/logs/clover.xml --coverage-html build/coverage --coverage-text --do-not-fail-on-warning --do-not-fail-on-phpunit-warning",
+        "test-integration": "vendor/bin/phpunit --testsuite Integration --no-coverage",
         "format": "vendor/bin/pint",
         "analyse": "vendor/bin/phpstan analyse",
         "rector": "vendor/bin/rector",
@@ -55,7 +56,5 @@
         "allow-plugins": {
             "phpstan/extension-installer": true
         }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    }
 }

@@ -4,11 +4,22 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG;
 
+use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
+use NiekNijland\ViaBOVAG\Data\BicycleSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\CamperSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\FacetName;
+use NiekNijland\ViaBOVAG\Data\FilterOption;
 use NiekNijland\ViaBOVAG\Data\Listing;
 use NiekNijland\ViaBOVAG\Data\ListingDetail;
 use NiekNijland\ViaBOVAG\Data\MobilityType;
+use NiekNijland\ViaBOVAG\Data\Model;
+use NiekNijland\ViaBOVAG\Data\MotorcycleSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\SearchFacet;
+use NiekNijland\ViaBOVAG\Data\SearchFacetOption;
 use NiekNijland\ViaBOVAG\Data\SearchQuery;
 use NiekNijland\ViaBOVAG\Data\SearchResult;
 use NiekNijland\ViaBOVAG\Exception\NotFoundException;
@@ -24,6 +35,11 @@ class ViaBOVAG implements ViaBOVAGInterface
 
     private const string CACHE_KEY = 'viabovag:build-id';
 
+    private const string ALL_BRANDS_CATEGORY_LABEL = 'Alle merken';
+
+    /** @var int[] */
+    private const array RETRYABLE_STATUS_CODES = [429, 503];
+
     private ?string $buildId = null;
 
     private readonly JsonParser $parser;
@@ -32,6 +48,7 @@ class ViaBOVAG implements ViaBOVAGInterface
         private readonly ClientInterface $httpClient = new Client,
         private readonly ?CacheInterface $cache = null,
         private readonly int $cacheTtl = 3600,
+        private readonly int $maxRetries = 2,
     ) {
         $this->parser = new JsonParser;
     }
@@ -44,15 +61,64 @@ class ViaBOVAG implements ViaBOVAGInterface
         return $this->parser->parseSearchResults($json, $query->page());
     }
 
-    public function getDetail(Listing $listing): ListingDetail
+    public function searchAll(SearchQuery $query): Generator
     {
-        $mobilityType = MobilityType::tryFrom($listing->mobilityType)
-            ?? throw new ViaBOVAGException('Unknown mobility type: '.$listing->mobilityType);
+        $result = $this->search($query);
 
-        return $this->getDetailBySlug($listing->friendlyUriPart, $mobilityType);
+        foreach ($result->listings as $listing) {
+            yield $listing;
+        }
+
+        while ($result->hasNextPage()) {
+            $query = $query->withPage($result->currentPage + 1);
+            $result = $this->search($query);
+
+            foreach ($result->listings as $listing) {
+                yield $listing;
+            }
+        }
     }
 
-    public function getDetailBySlug(string $slug, MobilityType $mobilityType = MobilityType::Motor): ListingDetail
+    /**
+     * @return Brand[]
+     */
+    public function getBrands(MobilityType $mobilityType): array
+    {
+        $facets = $this->fetchFacets($this->createEmptyCriteria($mobilityType));
+
+        return $this->extractBrandsFromFacets($facets);
+    }
+
+    /**
+     * @return FilterOption[]
+     */
+    public function getFacetOptions(
+        MobilityType $mobilityType,
+        FacetName $facetName,
+        ?Brand $brand = null,
+        ?Model $model = null,
+    ): array {
+        $facets = $this->fetchFacets($this->createEmptyCriteria($mobilityType, $brand, $model));
+
+        return $this->extractFilterOptionsFromFacets($facets, $facetName->value);
+    }
+
+    /**
+     * @return Model[]
+     */
+    public function getModels(MobilityType $mobilityType, ?Brand $brand = null): array
+    {
+        $facets = $this->fetchFacets($this->createEmptyCriteria($mobilityType, $brand));
+
+        return $this->extractModelsFromFacets($facets);
+    }
+
+    public function getDetail(Listing $listing): ListingDetail
+    {
+        return $this->getDetailBySlug($listing->friendlyUriPart, $listing->mobilityType);
+    }
+
+    public function getDetailBySlug(string $slug, MobilityType $mobilityType): ListingDetail
     {
         $url = $this->buildDetailUrl($slug, $mobilityType);
         $json = $this->fetchJsonWithRetry($url);
@@ -66,8 +132,144 @@ class ViaBOVAG implements ViaBOVAGInterface
         $this->cache?->delete(self::CACHE_KEY);
     }
 
+    private function createEmptyCriteria(
+        MobilityType $mobilityType,
+        ?Brand $brand = null,
+        ?Model $model = null,
+    ): SearchQuery {
+        return match ($mobilityType) {
+            MobilityType::Motorcycle => new MotorcycleSearchCriteria(brand: $brand, model: $model),
+            MobilityType::Car => new CarSearchCriteria(brand: $brand, model: $model),
+            MobilityType::Bicycle => new BicycleSearchCriteria(brand: $brand, model: $model),
+            MobilityType::Camper => new CamperSearchCriteria(brand: $brand, model: $model),
+        };
+    }
+
+    /**
+     * @return SearchFacet[]
+     */
+    private function fetchFacets(SearchQuery $query): array
+    {
+        $url = $this->buildSearchUrl($query);
+        $json = $this->fetchJsonWithRetry($url);
+
+        return $this->parser->parseSearchFacets($json);
+    }
+
+    /**
+     * @param  SearchFacet[]  $facets
+     * @return FilterOption[]
+     */
+    private function extractFilterOptionsFromFacets(
+        array $facets,
+        string $facetName,
+        ?string $preferredCategoryLabel = null,
+    ): array {
+        $options = $this->extractFacetOptions(
+            facets: $facets,
+            facetName: $facetName,
+            preferredCategoryLabel: $preferredCategoryLabel,
+        );
+
+        $filterOptionsBySlug = [];
+
+        foreach ($options as $option) {
+            if ($option->name === '' || array_key_exists($option->name, $filterOptionsBySlug)) {
+                continue;
+            }
+
+            $filterOptionsBySlug[$option->name] = new FilterOption(
+                slug: $option->name,
+                label: $option->label !== '' ? $option->label : $option->name,
+                count: $option->count,
+            );
+        }
+
+        return array_values($filterOptionsBySlug);
+    }
+
+    /**
+     * @param  SearchFacet[]  $facets
+     * @return Brand[]
+     */
+    private function extractBrandsFromFacets(array $facets): array
+    {
+        $options = $this->extractFilterOptionsFromFacets(
+            facets: $facets,
+            facetName: FacetName::Brand->value,
+            preferredCategoryLabel: self::ALL_BRANDS_CATEGORY_LABEL,
+        );
+
+        return array_map(
+            fn (FilterOption $option): Brand => new Brand(
+                slug: $option->slug,
+                label: $option->label,
+                count: $option->count,
+            ),
+            $options,
+        );
+    }
+
+    /**
+     * @param  SearchFacet[]  $facets
+     * @return Model[]
+     */
+    private function extractModelsFromFacets(array $facets): array
+    {
+        $options = $this->extractFilterOptionsFromFacets($facets, FacetName::Model->value);
+
+        return array_map(
+            fn (FilterOption $option): Model => new Model(
+                slug: $option->slug,
+                label: $option->label,
+                count: $option->count,
+            ),
+            $options,
+        );
+    }
+
+    /**
+     * @param  SearchFacet[]  $facets
+     * @return SearchFacetOption[]
+     */
+    private function extractFacetOptions(array $facets, string $facetName, ?string $preferredCategoryLabel = null): array
+    {
+        $matchedFacet = array_find($facets, fn ($facet): bool => $facet->name === $facetName);
+        if (! $matchedFacet instanceof SearchFacet) {
+            return [];
+        }
+
+        if ($preferredCategoryLabel !== null) {
+            foreach ($matchedFacet->optionCategories as $category) {
+                if (strcasecmp($category->label, $preferredCategoryLabel) !== 0) {
+                    continue;
+                }
+
+                return $category->options;
+            }
+        }
+
+        if ($matchedFacet->options !== []) {
+            return $matchedFacet->options;
+        }
+
+        $options = [];
+
+        foreach ($matchedFacet->optionCategories as $category) {
+            $options = [...$options, ...$category->options];
+        }
+
+        return $options;
+    }
+
     private function buildSearchUrl(SearchQuery $query): string
     {
+        $page = $query->page();
+
+        if ($page < 1) {
+            throw new ViaBOVAGException('Search page must be greater than or equal to 1.');
+        }
+
         $buildId = $this->ensureBuildId();
         $filterSlugs = $query->toFilterSlugs();
         $selectedFilters = implode(',', $filterSlugs);
@@ -80,8 +282,8 @@ class ViaBOVAG implements ViaBOVAGInterface
             $params['selectedFilters'] = $selectedFilters;
         }
 
-        if ($query->page() > 1) {
-            $params['page'] = (string) $query->page();
+        if ($page > 1) {
+            $params['page'] = (string) $page;
         }
 
         return self::BASE_URL.'/_next/data/'.$buildId.'/nl-NL/srp.json?'.http_build_query($params);
@@ -106,7 +308,7 @@ class ViaBOVAG implements ViaBOVAGInterface
     private function fetchJsonWithRetry(string $url): string
     {
         try {
-            return $this->fetchJson($url);
+            return $this->fetchJsonWithTransientRetry($url);
         } catch (NotFoundException $notFoundException) {
             // Stale build ID — invalidate and retry
             $oldBuildId = $this->buildId;
@@ -127,8 +329,50 @@ class ViaBOVAG implements ViaBOVAGInterface
             // Replace old build ID in URL
             $url = str_replace($oldBuildId, $newBuildId, $url);
 
-            return $this->fetchJson($url);
+            return $this->fetchJsonWithTransientRetry($url);
         }
+    }
+
+    /**
+     * Fetch JSON with retry logic for transient HTTP errors (429, 503).
+     * Retries up to $maxRetries times with exponential backoff.
+     */
+    private function fetchJsonWithTransientRetry(string $url): string
+    {
+        $lastException = null;
+
+        for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
+            try {
+                return $this->fetchJson($url);
+            } catch (ViaBOVAGException $exception) {
+                // Let 404s bubble up immediately — handled by stale build ID retry
+                if ($exception instanceof NotFoundException) {
+                    throw $exception;
+                }
+
+                // Only retry on transient status codes
+                if (! $this->isTransientError($exception)) {
+                    throw $exception;
+                }
+
+                $lastException = $exception;
+
+                // Exponential backoff: 500ms, 1000ms, ...
+                if ($attempt < $this->maxRetries) {
+                    usleep(500_000 * 2 ** $attempt);
+                }
+            }
+        }
+
+        throw $lastException ?? new ViaBOVAGException('Request failed after '.($this->maxRetries + 1).' attempts.');
+    }
+
+    /**
+     * Check if an exception represents a transient HTTP error that should be retried.
+     */
+    private function isTransientError(ViaBOVAGException $exception): bool
+    {
+        return in_array($exception->getCode(), self::RETRYABLE_STATUS_CODES, true);
     }
 
     private function fetchJson(string $url): string
@@ -146,11 +390,11 @@ class ViaBOVAG implements ViaBOVAGInterface
         $statusCode = $response->getStatusCode();
 
         if ($statusCode === 404) {
-            throw new NotFoundException('HTTP 404: Resource not found — build ID may be stale.');
+            throw new NotFoundException('HTTP 404: Resource not found — build ID may be stale.', $statusCode);
         }
 
         if ($statusCode !== 200) {
-            throw new ViaBOVAGException('HTTP '.$statusCode.': Unexpected response status.');
+            throw new ViaBOVAGException('HTTP '.$statusCode.': Unexpected response status.', $statusCode);
         }
 
         return (string) $response->getBody();

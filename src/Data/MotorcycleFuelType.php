@@ -6,9 +6,9 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum MotorcycleFuelType: string
 {
-    case Benzine = 'Benzine';
-    case Elektriciteit = 'Elektriciteit';
-    case Overige = 'Overige';
+    case Petrol = 'Benzine';
+    case Electric = 'Elektriciteit';
+    case Other = 'Overige';
 
     public function slug(): string
     {

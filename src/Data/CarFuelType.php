@@ -6,13 +6,13 @@ namespace NiekNijland\ViaBOVAG\Data;
 
 enum CarFuelType: string
 {
-    case Benzine = 'Benzine';
+    case Petrol = 'Benzine';
     case Diesel = 'Diesel';
-    case Hybride = 'Hybride';
-    case Elektriciteit = 'Elektriciteit';
+    case Hybrid = 'Hybride';
+    case Electric = 'Elektriciteit';
     case Gas = 'Gas';
-    case Waterstof = 'Waterstof';
-    case Overige = 'Overige';
+    case Hydrogen = 'Waterstof';
+    case Other = 'Overige';
 
     public function slug(): string
     {

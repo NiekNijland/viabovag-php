@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NiekNijland\ViaBOVAG\Testing;
 
 use NiekNijland\ViaBOVAG\Data\ListingDetail;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
 
 class ListingDetailFactory
 {
@@ -27,6 +28,16 @@ class ListingDetailFactory
             'licensePlate' => '77MJRJ',
             'externalNumber' => '0025173',
             'structuredData' => null,
+            'priceExcludesVat' => false,
+            'url' => 'https://www.viabovag.nl/motor/aanbod/suzuki-gsx-r-1300-hayabusa-f0fe1ht',
+            'mobilityType' => MobilityType::Motorcycle,
+            'isEligibleForVehicleReport' => false,
+            'financingProvider' => null,
+            'leasePrice' => null,
+            'roadTax' => null,
+            'fuelConsumption' => null,
+            'bijtellingPercentage' => null,
+            'returnWarrantyMileage' => null,
         ];
 
         $data = array_merge($defaults, $overrides);
@@ -45,6 +56,16 @@ class ListingDetailFactory
             licensePlate: $data['licensePlate'],
             externalNumber: $data['externalNumber'],
             structuredData: $data['structuredData'],
+            priceExcludesVat: $data['priceExcludesVat'],
+            url: $data['url'],
+            mobilityType: $data['mobilityType'],
+            isEligibleForVehicleReport: $data['isEligibleForVehicleReport'],
+            financingProvider: $data['financingProvider'],
+            leasePrice: $data['leasePrice'],
+            roadTax: $data['roadTax'],
+            fuelConsumption: $data['fuelConsumption'],
+            bijtellingPercentage: $data['bijtellingPercentage'],
+            returnWarrantyMileage: $data['returnWarrantyMileage'],
         );
     }
 }

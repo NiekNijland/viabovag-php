@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG\Tests\Integration;
 
+use NiekNijland\ViaBOVAG\Data\BicycleSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\ListingDetail;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
 use NiekNijland\ViaBOVAG\Data\MotorcycleSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\SearchResult;
 use NiekNijland\ViaBOVAG\ViaBOVAG;
@@ -20,6 +23,10 @@ class IntegrationTest extends TestCase
 
     private static ?SearchResult $searchResult = null;
 
+    private static ?SearchResult $carSearchResult = null;
+
+    private static ?SearchResult $bicycleSearchResult = null;
+
     private static ?ListingDetail $listingDetail = null;
 
     public static function setUpBeforeClass(): void
@@ -28,6 +35,8 @@ class IntegrationTest extends TestCase
 
         // Fetch data once to minimize HTTP calls
         self::$searchResult = self::$client->search(new MotorcycleSearchCriteria);
+        self::$carSearchResult = self::$client->search(new CarSearchCriteria);
+        self::$bicycleSearchResult = self::$client->search(new BicycleSearchCriteria);
 
         if (self::$searchResult->listings !== []) {
             self::$listingDetail = self::$client->getDetail(self::$searchResult->listings[0]);
@@ -53,6 +62,26 @@ class IntegrationTest extends TestCase
         $this->assertNotEmpty($listing->friendlyUriPart);
         $this->assertNotEmpty($listing->vehicle->brand);
         $this->assertNotEmpty($listing->company->name);
+    }
+
+    public function test_car_search_parses_car_mobility_type(): void
+    {
+        $this->assertNotNull(self::$carSearchResult);
+        $this->assertGreaterThan(0, self::$carSearchResult->totalCount);
+        $this->assertNotEmpty(self::$carSearchResult->listings);
+
+        $this->assertSame(MobilityType::Car, self::$carSearchResult->listings[0]->mobilityType);
+    }
+
+    public function test_bicycle_search_parses_bicycle_mobility_type_when_results_exist(): void
+    {
+        $this->assertNotNull(self::$bicycleSearchResult);
+
+        if (self::$bicycleSearchResult->listings === []) {
+            $this->markTestSkipped('No bicycle listings available at this moment.');
+        }
+
+        $this->assertSame(MobilityType::Bicycle, self::$bicycleSearchResult->listings[0]->mobilityType);
     }
 
     public function test_detail_has_expected_structure(): void
@@ -94,7 +123,7 @@ class IntegrationTest extends TestCase
         }
 
         $listing = self::$searchResult->listings[0];
-        $detail = self::$client->getDetailBySlug($listing->friendlyUriPart);
+        $detail = self::$client->getDetailBySlug($listing->friendlyUriPart, $listing->mobilityType);
 
         $this->assertNotEmpty($detail->id);
         $this->assertNotEmpty($detail->title);

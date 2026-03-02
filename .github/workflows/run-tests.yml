@@ -56,4 +56,4 @@ jobs:
         run: composer show -D
 
       - name: Execute tests
-        run: vendor/bin/phpunit --testsuite Unit
+        run: vendor/bin/phpunit --testsuite Unit --no-coverage

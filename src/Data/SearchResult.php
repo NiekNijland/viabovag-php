@@ -10,11 +10,13 @@ readonly class SearchResult
 
     /**
      * @param  Listing[]  $listings
+     * @param  SearchFacet[]  $facets
      */
     public function __construct(
         public array $listings,
         public int $totalCount,
         public int $currentPage,
+        public array $facets = [],
     ) {}
 
     public function totalPages(): int

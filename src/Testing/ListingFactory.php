@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NiekNijland\ViaBOVAG\Testing;
 
 use NiekNijland\ViaBOVAG\Data\Listing;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
 
 class ListingFactory
 {
@@ -15,7 +16,7 @@ class ListingFactory
     {
         $defaults = [
             'id' => '96363b6a-38de-4ba9-a681-7335a86f8c08',
-            'mobilityType' => 'motor',
+            'mobilityType' => MobilityType::Motorcycle,
             'url' => 'https://www.viabovag.nl/motor/aanbod/suzuki-gsx-r-1300-hayabusa-f0fe1ht',
             'friendlyUriPart' => 'suzuki-gsx-r-1300-hayabusa-f0fe1ht',
             'externalAdvertisementUrl' => '',
@@ -25,6 +26,7 @@ class ListingFactory
             'isFinanceable' => false,
             'vehicle' => null,
             'company' => null,
+            'priceExcludesVat' => false,
         ];
 
         $data = array_merge($defaults, $overrides);
@@ -41,6 +43,7 @@ class ListingFactory
             isFinanceable: $data['isFinanceable'],
             vehicle: $data['vehicle'] ?? VehicleFactory::make(),
             company: $data['company'] ?? CompanyFactory::make(),
+            priceExcludesVat: $data['priceExcludesVat'],
         );
     }
 

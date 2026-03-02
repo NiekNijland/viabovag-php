@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace NiekNijland\ViaBOVAG\Data;
 
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
+use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
 
+/** @phpstan-consistent-constructor */
 readonly class MotorcycleSearchCriteria implements SearchQuery
 {
     use HasSharedFilterSlugs;
+    use HasWithPage;
 
     /**
      * @param  MotorcycleBodyType[]|null  $bodyTypes
@@ -17,8 +20,8 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
      */
     public function __construct(
         // Core
-        public ?string $brand = null,
-        public ?string $model = null,
+        public ?Brand $brand = null,
+        public ?Model $model = null,
         public ?string $modelKeywords = null,
 
         // Pricing
@@ -49,6 +52,7 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?TransmissionType $transmission = null,
         public ?array $colors = null,
         public ?Condition $condition = null,
+        public ?FilterOption $frameType = null,
 
         // Location
         public ?string $postalCode = null,
@@ -63,7 +67,7 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
         public ?bool $hasBovagImportOdometerCheck = null,
-        public ?bool $carServicedOnDelivery = null,
+        public ?bool $servicedOnDelivery = null,
         public ?bool $hasNapWeblabel = null,
 
         // Financial
@@ -75,13 +79,18 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?string $keywords = null,
         public ?AvailableSince $availableSince = null,
 
+        // Sorting
+        public ?SortOrder $sortOrder = null,
+
         // Pagination
         public int $page = 1,
-    ) {}
+    ) {
+        self::assertValidPage($page);
+    }
 
     public function mobilityType(): MobilityType
     {
-        return MobilityType::Motor;
+        return MobilityType::Motorcycle;
     }
 
     public function page(): int
@@ -122,6 +131,10 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
 
         if ($this->driversLicense instanceof DriversLicense) {
             $filters[] = $this->driversLicense->slug();
+        }
+
+        if ($this->frameType instanceof FilterOption) {
+            $filters[] = 'frametype-'.$this->frameType->slug;
         }
 
         return $filters;

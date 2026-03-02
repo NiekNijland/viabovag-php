@@ -8,15 +8,15 @@ enum CarBodyType: string
 {
     case Hatchback = 'Hatchback';
     case Sedan = 'Sedan';
-    case SuvTerreinwagen = 'SuvTerreinwagen';
-    case Stationwagen = 'Stationwagen';
+    case SuvOffRoad = 'SuvTerreinwagen';
+    case StationWagon = 'Stationwagen';
     case Coupe = 'Coupe';
     case Mpv = 'Mpv';
     case Cabriolet = 'Cabriolet';
-    case Bedrijfswagen = 'Bedrijfswagen';
-    case Personenbus = 'Personenbus';
+    case CommercialVehicle = 'Bedrijfswagen';
+    case PassengerBus = 'Personenbus';
     case Pickup = 'Pickup';
-    case Overig = 'Overig';
+    case Other = 'Overig';
 
     public function slug(): string
     {
