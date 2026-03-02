@@ -330,7 +330,8 @@ class ViaBOVAGTest extends TestCase
         $searchRequest = $history[1]['request'];
         $query = urldecode($searchRequest->getUri()->getQuery());
 
-        $this->assertStringContainsString('selectedFilters=merk-yamaha,model-mt-07', $query);
+        $this->assertStringContainsString('selectedFilters=merk-yamaha', $query);
+        $this->assertStringContainsString('selectedFilters=model-mt-07', $query);
     }
 
     public function test_get_facet_options_supports_option_categories(): void
@@ -1350,7 +1351,7 @@ class ViaBOVAGTest extends TestCase
         $searchRequest = $history[1]['request'];
         $query = $searchRequest->getUri()->getQuery();
 
-        $this->assertStringContainsString('page=3', $query);
+        $this->assertStringContainsString('selectedFilters=pagina-3', $query);
     }
 
     public function test_search_url_omits_page_parameter_for_page_1(): void
@@ -1371,7 +1372,7 @@ class ViaBOVAGTest extends TestCase
         $searchRequest = $history[1]['request'];
         $query = $searchRequest->getUri()->getQuery();
 
-        $this->assertStringNotContainsString('page=', $query);
+        $this->assertStringNotContainsString('pagina-', $query);
     }
 
     public function test_detail_url_contains_correct_mobility_type_and_slug(): void

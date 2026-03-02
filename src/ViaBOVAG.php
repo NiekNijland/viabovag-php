@@ -272,21 +272,18 @@ class ViaBOVAG implements ViaBOVAGInterface
 
         $buildId = $this->ensureBuildId();
         $filterSlugs = $query->toFilterSlugs();
-        $selectedFilters = implode(',', $filterSlugs);
-
-        $params = [
-            'mobilityType' => $query->mobilityType()->searchSlug(),
-        ];
-
-        if ($selectedFilters !== '') {
-            $params['selectedFilters'] = $selectedFilters;
-        }
 
         if ($page > 1) {
-            $params['page'] = (string) $page;
+            $filterSlugs[] = 'pagina-'.$page;
         }
 
-        return self::BASE_URL.'/_next/data/'.$buildId.'/nl-NL/srp.json?'.http_build_query($params);
+        $queryString = 'mobilityType='.urlencode($query->mobilityType()->searchSlug());
+
+        foreach ($filterSlugs as $slug) {
+            $queryString .= '&selectedFilters='.urlencode($slug);
+        }
+
+        return self::BASE_URL.'/_next/data/'.$buildId.'/nl-NL/srp.json?'.$queryString;
     }
 
     private function buildDetailUrl(string $slug, MobilityType $mobilityType): string
