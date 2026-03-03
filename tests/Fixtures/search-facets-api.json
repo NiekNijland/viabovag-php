@@ -1,0 +1,4228 @@
+{
+  "count": 2449,
+  "selectedFacets": [],
+  "facets": [
+    {
+      "name": "Brand",
+      "label": "Merk",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "optionCategories": [
+        {
+          "label": "Populair",
+          "options": [
+            {
+              "name": "aprilia",
+              "label": "Aprilia",
+              "count": 51,
+              "selected": false
+            },
+            {
+              "name": "bmw",
+              "label": "BMW",
+              "count": 289,
+              "selected": false
+            },
+            {
+              "name": "ducati",
+              "label": "Ducati",
+              "count": 151,
+              "selected": false
+            },
+            {
+              "name": "harley-davidson",
+              "label": "Harley-Davidson",
+              "count": 66,
+              "selected": false
+            },
+            {
+              "name": "honda",
+              "label": "Honda",
+              "count": 347,
+              "selected": false
+            },
+            {
+              "name": "kawasaki",
+              "label": "Kawasaki",
+              "count": 387,
+              "selected": false
+            },
+            {
+              "name": "ktm",
+              "label": "KTM",
+              "count": 94,
+              "selected": false
+            },
+            {
+              "name": "suzuki",
+              "label": "Suzuki",
+              "count": 193,
+              "selected": false
+            },
+            {
+              "name": "triumph",
+              "label": "Triumph",
+              "count": 79,
+              "selected": false
+            },
+            {
+              "name": "yamaha",
+              "label": "Yamaha",
+              "count": 582,
+              "selected": false
+            }
+          ]
+        },
+        {
+          "label": "Alle merken",
+          "options": [
+            {
+              "name": "aprilia",
+              "label": "Aprilia",
+              "count": 51,
+              "selected": false
+            },
+            {
+              "name": "benelli",
+              "label": "Benelli",
+              "count": 4,
+              "selected": false
+            },
+            {
+              "name": "bimota",
+              "label": "Bimota",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "bmw",
+              "label": "BMW",
+              "count": 289,
+              "selected": false
+            },
+            {
+              "name": "can-am",
+              "label": "Can-Am",
+              "count": 28,
+              "selected": false
+            },
+            {
+              "name": "cfmoto",
+              "label": "CFMOTO",
+              "count": 6,
+              "selected": false
+            },
+            {
+              "name": "ducati",
+              "label": "Ducati",
+              "count": 151,
+              "selected": false
+            },
+            {
+              "name": "fantic",
+              "label": "Fantic",
+              "count": 5,
+              "selected": false
+            },
+            {
+              "name": "harley-davidson",
+              "label": "Harley-Davidson",
+              "count": 66,
+              "selected": false
+            },
+            {
+              "name": "honda",
+              "label": "Honda",
+              "count": 347,
+              "selected": false
+            },
+            {
+              "name": "husqvarna",
+              "label": "Husqvarna",
+              "count": 4,
+              "selected": false
+            },
+            {
+              "name": "indian",
+              "label": "Indian",
+              "count": 5,
+              "selected": false
+            },
+            {
+              "name": "kawasaki",
+              "label": "Kawasaki",
+              "count": 387,
+              "selected": false
+            },
+            {
+              "name": "ktm",
+              "label": "KTM",
+              "count": 94,
+              "selected": false
+            },
+            {
+              "name": "ligier",
+              "label": "Ligier",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "mash",
+              "label": "Mash",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "microlino",
+              "label": "Microlino",
+              "count": 2,
+              "selected": false
+            },
+            {
+              "name": "mobilize",
+              "label": "Mobilize",
+              "count": 3,
+              "selected": false
+            },
+            {
+              "name": "morgan",
+              "label": "Morgan",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "moto-guzzi",
+              "label": "Moto Guzzi",
+              "count": 49,
+              "selected": false
+            },
+            {
+              "name": "mv-agusta",
+              "label": "MV Agusta",
+              "count": 8,
+              "selected": false
+            },
+            {
+              "name": "piaggio",
+              "label": "Piaggio",
+              "count": 8,
+              "selected": false
+            },
+            {
+              "name": "qjmotor",
+              "label": "QJMotor",
+              "count": 6,
+              "selected": false
+            },
+            {
+              "name": "qooder",
+              "label": "Qooder",
+              "count": 6,
+              "selected": false
+            },
+            {
+              "name": "royal-enfield",
+              "label": "Royal Enfield",
+              "count": 57,
+              "selected": false
+            },
+            {
+              "name": "silence",
+              "label": "Silence",
+              "count": 3,
+              "selected": false
+            },
+            {
+              "name": "suzuki",
+              "label": "Suzuki",
+              "count": 193,
+              "selected": false
+            },
+            {
+              "name": "sym",
+              "label": "Sym",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "triumph",
+              "label": "Triumph",
+              "count": 79,
+              "selected": false
+            },
+            {
+              "name": "trmotor",
+              "label": "TRMOTOR",
+              "count": 2,
+              "selected": false
+            },
+            {
+              "name": "vanderhall",
+              "label": "Vanderhall",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "vespa",
+              "label": "Vespa",
+              "count": 5,
+              "selected": false
+            },
+            {
+              "name": "xev",
+              "label": "XEV",
+              "count": 1,
+              "selected": false
+            },
+            {
+              "name": "yamaha",
+              "label": "Yamaha",
+              "count": 582,
+              "selected": false
+            },
+            {
+              "name": "zero-motorcycles",
+              "label": "Zero Motorcycles",
+              "count": 2,
+              "selected": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Model",
+      "label": "Type uitvoering",
+      "disabled": true,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": []
+    },
+    {
+      "name": "PriceFrom",
+      "label": "Prijs van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "500",
+          "label": "€ 500",
+          "selected": false
+        },
+        {
+          "name": "1000",
+          "label": "€ 1.000",
+          "selected": false
+        },
+        {
+          "name": "1500",
+          "label": "€ 1.500",
+          "selected": false
+        },
+        {
+          "name": "2000",
+          "label": "€ 2.000",
+          "selected": false
+        },
+        {
+          "name": "2500",
+          "label": "€ 2.500",
+          "selected": false
+        },
+        {
+          "name": "3000",
+          "label": "€ 3.000",
+          "selected": false
+        },
+        {
+          "name": "4000",
+          "label": "€ 4.000",
+          "selected": false
+        },
+        {
+          "name": "5000",
+          "label": "€ 5.000",
+          "selected": false
+        },
+        {
+          "name": "6000",
+          "label": "€ 6.000",
+          "selected": false
+        },
+        {
+          "name": "7000",
+          "label": "€ 7.000",
+          "selected": false
+        },
+        {
+          "name": "8000",
+          "label": "€ 8.000",
+          "selected": false
+        },
+        {
+          "name": "9000",
+          "label": "€ 9.000",
+          "selected": false
+        },
+        {
+          "name": "10000",
+          "label": "€ 10.000",
+          "selected": false
+        },
+        {
+          "name": "12500",
+          "label": "€ 12.500",
+          "selected": false
+        },
+        {
+          "name": "15000",
+          "label": "€ 15.000",
+          "selected": false
+        },
+        {
+          "name": "17500",
+          "label": "€ 17.500",
+          "selected": false
+        },
+        {
+          "name": "20000",
+          "label": "€ 20.000",
+          "selected": false
+        },
+        {
+          "name": "25000",
+          "label": "€ 25.000",
+          "selected": false
+        },
+        {
+          "name": "30000",
+          "label": "€ 30.000",
+          "selected": false
+        },
+        {
+          "name": "50000",
+          "label": "€ 50.000",
+          "selected": false
+        },
+        {
+          "name": "75000",
+          "label": "€ 75.000",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "PriceTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "500",
+          "label": "€ 500",
+          "selected": false
+        },
+        {
+          "name": "1000",
+          "label": "€ 1.000",
+          "selected": false
+        },
+        {
+          "name": "1500",
+          "label": "€ 1.500",
+          "selected": false
+        },
+        {
+          "name": "2000",
+          "label": "€ 2.000",
+          "selected": false
+        },
+        {
+          "name": "2500",
+          "label": "€ 2.500",
+          "selected": false
+        },
+        {
+          "name": "3000",
+          "label": "€ 3.000",
+          "selected": false
+        },
+        {
+          "name": "4000",
+          "label": "€ 4.000",
+          "selected": false
+        },
+        {
+          "name": "5000",
+          "label": "€ 5.000",
+          "selected": false
+        },
+        {
+          "name": "6000",
+          "label": "€ 6.000",
+          "selected": false
+        },
+        {
+          "name": "7000",
+          "label": "€ 7.000",
+          "selected": false
+        },
+        {
+          "name": "8000",
+          "label": "€ 8.000",
+          "selected": false
+        },
+        {
+          "name": "9000",
+          "label": "€ 9.000",
+          "selected": false
+        },
+        {
+          "name": "10000",
+          "label": "€ 10.000",
+          "selected": false
+        },
+        {
+          "name": "12500",
+          "label": "€ 12.500",
+          "selected": false
+        },
+        {
+          "name": "15000",
+          "label": "€ 15.000",
+          "selected": false
+        },
+        {
+          "name": "17500",
+          "label": "€ 17.500",
+          "selected": false
+        },
+        {
+          "name": "20000",
+          "label": "€ 20.000",
+          "selected": false
+        },
+        {
+          "name": "25000",
+          "label": "€ 25.000",
+          "selected": false
+        },
+        {
+          "name": "30000",
+          "label": "€ 30.000",
+          "selected": false
+        },
+        {
+          "name": "50000",
+          "label": "€ 50.000",
+          "selected": false
+        },
+        {
+          "name": "75000",
+          "label": "€ 75.000",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "LeasePriceFrom",
+      "label": "Leaseprijs van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": true,
+      "options": []
+    },
+    {
+      "name": "LeasePriceTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": true,
+      "options": []
+    },
+    {
+      "name": "YearFrom",
+      "label": "Bouwjaar van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "2026",
+          "label": "2026",
+          "selected": false
+        },
+        {
+          "name": "2025",
+          "label": "2025",
+          "selected": false
+        },
+        {
+          "name": "2024",
+          "label": "2024",
+          "selected": false
+        },
+        {
+          "name": "2023",
+          "label": "2023",
+          "selected": false
+        },
+        {
+          "name": "2022",
+          "label": "2022",
+          "selected": false
+        },
+        {
+          "name": "2021",
+          "label": "2021",
+          "selected": false
+        },
+        {
+          "name": "2020",
+          "label": "2020",
+          "selected": false
+        },
+        {
+          "name": "2019",
+          "label": "2019",
+          "selected": false
+        },
+        {
+          "name": "2018",
+          "label": "2018",
+          "selected": false
+        },
+        {
+          "name": "2017",
+          "label": "2017",
+          "selected": false
+        },
+        {
+          "name": "2016",
+          "label": "2016",
+          "selected": false
+        },
+        {
+          "name": "2015",
+          "label": "2015",
+          "selected": false
+        },
+        {
+          "name": "2014",
+          "label": "2014",
+          "selected": false
+        },
+        {
+          "name": "2013",
+          "label": "2013",
+          "selected": false
+        },
+        {
+          "name": "2012",
+          "label": "2012",
+          "selected": false
+        },
+        {
+          "name": "2011",
+          "label": "2011",
+          "selected": false
+        },
+        {
+          "name": "2010",
+          "label": "2010",
+          "selected": false
+        },
+        {
+          "name": "2009",
+          "label": "2009",
+          "selected": false
+        },
+        {
+          "name": "2008",
+          "label": "2008",
+          "selected": false
+        },
+        {
+          "name": "2007",
+          "label": "2007",
+          "selected": false
+        },
+        {
+          "name": "2006",
+          "label": "2006",
+          "selected": false
+        },
+        {
+          "name": "2005",
+          "label": "2005",
+          "selected": false
+        },
+        {
+          "name": "2004",
+          "label": "2004",
+          "selected": false
+        },
+        {
+          "name": "2003",
+          "label": "2003",
+          "selected": false
+        },
+        {
+          "name": "2002",
+          "label": "2002",
+          "selected": false
+        },
+        {
+          "name": "2001",
+          "label": "2001",
+          "selected": false
+        },
+        {
+          "name": "2000",
+          "label": "2000",
+          "selected": false
+        },
+        {
+          "name": "1990",
+          "label": "1990",
+          "selected": false
+        },
+        {
+          "name": "1980",
+          "label": "1980",
+          "selected": false
+        },
+        {
+          "name": "1970",
+          "label": "1970",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "YearTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "2026",
+          "label": "2026",
+          "selected": false
+        },
+        {
+          "name": "2025",
+          "label": "2025",
+          "selected": false
+        },
+        {
+          "name": "2024",
+          "label": "2024",
+          "selected": false
+        },
+        {
+          "name": "2023",
+          "label": "2023",
+          "selected": false
+        },
+        {
+          "name": "2022",
+          "label": "2022",
+          "selected": false
+        },
+        {
+          "name": "2021",
+          "label": "2021",
+          "selected": false
+        },
+        {
+          "name": "2020",
+          "label": "2020",
+          "selected": false
+        },
+        {
+          "name": "2019",
+          "label": "2019",
+          "selected": false
+        },
+        {
+          "name": "2018",
+          "label": "2018",
+          "selected": false
+        },
+        {
+          "name": "2017",
+          "label": "2017",
+          "selected": false
+        },
+        {
+          "name": "2016",
+          "label": "2016",
+          "selected": false
+        },
+        {
+          "name": "2015",
+          "label": "2015",
+          "selected": false
+        },
+        {
+          "name": "2014",
+          "label": "2014",
+          "selected": false
+        },
+        {
+          "name": "2013",
+          "label": "2013",
+          "selected": false
+        },
+        {
+          "name": "2012",
+          "label": "2012",
+          "selected": false
+        },
+        {
+          "name": "2011",
+          "label": "2011",
+          "selected": false
+        },
+        {
+          "name": "2010",
+          "label": "2010",
+          "selected": false
+        },
+        {
+          "name": "2009",
+          "label": "2009",
+          "selected": false
+        },
+        {
+          "name": "2008",
+          "label": "2008",
+          "selected": false
+        },
+        {
+          "name": "2007",
+          "label": "2007",
+          "selected": false
+        },
+        {
+          "name": "2006",
+          "label": "2006",
+          "selected": false
+        },
+        {
+          "name": "2005",
+          "label": "2005",
+          "selected": false
+        },
+        {
+          "name": "2004",
+          "label": "2004",
+          "selected": false
+        },
+        {
+          "name": "2003",
+          "label": "2003",
+          "selected": false
+        },
+        {
+          "name": "2002",
+          "label": "2002",
+          "selected": false
+        },
+        {
+          "name": "2001",
+          "label": "2001",
+          "selected": false
+        },
+        {
+          "name": "2000",
+          "label": "2000",
+          "selected": false
+        },
+        {
+          "name": "1990",
+          "label": "1990",
+          "selected": false
+        },
+        {
+          "name": "1980",
+          "label": "1980",
+          "selected": false
+        },
+        {
+          "name": "1970",
+          "label": "1970",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "ModelYearFrom",
+      "label": "Modeljaar van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "2027",
+          "label": "2027",
+          "selected": false
+        },
+        {
+          "name": "2026",
+          "label": "2026",
+          "selected": false
+        },
+        {
+          "name": "2025",
+          "label": "2025",
+          "selected": false
+        },
+        {
+          "name": "2024",
+          "label": "2024",
+          "selected": false
+        },
+        {
+          "name": "2023",
+          "label": "2023",
+          "selected": false
+        },
+        {
+          "name": "2022",
+          "label": "2022",
+          "selected": false
+        },
+        {
+          "name": "2021",
+          "label": "2021",
+          "selected": false
+        },
+        {
+          "name": "2020",
+          "label": "2020",
+          "selected": false
+        },
+        {
+          "name": "2019",
+          "label": "2019",
+          "selected": false
+        },
+        {
+          "name": "2018",
+          "label": "2018",
+          "selected": false
+        },
+        {
+          "name": "2017",
+          "label": "2017",
+          "selected": false
+        },
+        {
+          "name": "2016",
+          "label": "2016",
+          "selected": false
+        },
+        {
+          "name": "2015",
+          "label": "2015",
+          "selected": false
+        },
+        {
+          "name": "2014",
+          "label": "2014",
+          "selected": false
+        },
+        {
+          "name": "2013",
+          "label": "2013",
+          "selected": false
+        },
+        {
+          "name": "2012",
+          "label": "2012",
+          "selected": false
+        },
+        {
+          "name": "2011",
+          "label": "2011",
+          "selected": false
+        },
+        {
+          "name": "2010",
+          "label": "2010",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "ModelYearTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "2027",
+          "label": "2027",
+          "selected": false
+        },
+        {
+          "name": "2026",
+          "label": "2026",
+          "selected": false
+        },
+        {
+          "name": "2025",
+          "label": "2025",
+          "selected": false
+        },
+        {
+          "name": "2024",
+          "label": "2024",
+          "selected": false
+        },
+        {
+          "name": "2023",
+          "label": "2023",
+          "selected": false
+        },
+        {
+          "name": "2022",
+          "label": "2022",
+          "selected": false
+        },
+        {
+          "name": "2021",
+          "label": "2021",
+          "selected": false
+        },
+        {
+          "name": "2020",
+          "label": "2020",
+          "selected": false
+        },
+        {
+          "name": "2019",
+          "label": "2019",
+          "selected": false
+        },
+        {
+          "name": "2018",
+          "label": "2018",
+          "selected": false
+        },
+        {
+          "name": "2017",
+          "label": "2017",
+          "selected": false
+        },
+        {
+          "name": "2016",
+          "label": "2016",
+          "selected": false
+        },
+        {
+          "name": "2015",
+          "label": "2015",
+          "selected": false
+        },
+        {
+          "name": "2014",
+          "label": "2014",
+          "selected": false
+        },
+        {
+          "name": "2013",
+          "label": "2013",
+          "selected": false
+        },
+        {
+          "name": "2012",
+          "label": "2012",
+          "selected": false
+        },
+        {
+          "name": "2011",
+          "label": "2011",
+          "selected": false
+        },
+        {
+          "name": "2010",
+          "label": "2010",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "MileageFrom",
+      "label": "Km.stand van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "2500",
+          "label": "2.500",
+          "selected": false
+        },
+        {
+          "name": "5000",
+          "label": "5.000",
+          "selected": false
+        },
+        {
+          "name": "10000",
+          "label": "10.000",
+          "selected": false
+        },
+        {
+          "name": "15000",
+          "label": "15.000",
+          "selected": false
+        },
+        {
+          "name": "20000",
+          "label": "20.000",
+          "selected": false
+        },
+        {
+          "name": "25000",
+          "label": "25.000",
+          "selected": false
+        },
+        {
+          "name": "30000",
+          "label": "30.000",
+          "selected": false
+        },
+        {
+          "name": "35000",
+          "label": "35.000",
+          "selected": false
+        },
+        {
+          "name": "40000",
+          "label": "40.000",
+          "selected": false
+        },
+        {
+          "name": "45000",
+          "label": "45.000",
+          "selected": false
+        },
+        {
+          "name": "50000",
+          "label": "50.000",
+          "selected": false
+        },
+        {
+          "name": "60000",
+          "label": "60.000",
+          "selected": false
+        },
+        {
+          "name": "70000",
+          "label": "70.000",
+          "selected": false
+        },
+        {
+          "name": "80000",
+          "label": "80.000",
+          "selected": false
+        },
+        {
+          "name": "90000",
+          "label": "90.000",
+          "selected": false
+        },
+        {
+          "name": "100000",
+          "label": "100.000",
+          "selected": false
+        },
+        {
+          "name": "110000",
+          "label": "110.000",
+          "selected": false
+        },
+        {
+          "name": "120000",
+          "label": "120.000",
+          "selected": false
+        },
+        {
+          "name": "130000",
+          "label": "130.000",
+          "selected": false
+        },
+        {
+          "name": "140000",
+          "label": "140.000",
+          "selected": false
+        },
+        {
+          "name": "150000",
+          "label": "150.000",
+          "selected": false
+        },
+        {
+          "name": "175000",
+          "label": "175.000",
+          "selected": false
+        },
+        {
+          "name": "200000",
+          "label": "200.000",
+          "selected": false
+        },
+        {
+          "name": "250000",
+          "label": "250.000",
+          "selected": false
+        },
+        {
+          "name": "300000",
+          "label": "300.000",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "MileageTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "2500",
+          "label": "2.500",
+          "selected": false
+        },
+        {
+          "name": "5000",
+          "label": "5.000",
+          "selected": false
+        },
+        {
+          "name": "10000",
+          "label": "10.000",
+          "selected": false
+        },
+        {
+          "name": "15000",
+          "label": "15.000",
+          "selected": false
+        },
+        {
+          "name": "20000",
+          "label": "20.000",
+          "selected": false
+        },
+        {
+          "name": "25000",
+          "label": "25.000",
+          "selected": false
+        },
+        {
+          "name": "30000",
+          "label": "30.000",
+          "selected": false
+        },
+        {
+          "name": "35000",
+          "label": "35.000",
+          "selected": false
+        },
+        {
+          "name": "40000",
+          "label": "40.000",
+          "selected": false
+        },
+        {
+          "name": "45000",
+          "label": "45.000",
+          "selected": false
+        },
+        {
+          "name": "50000",
+          "label": "50.000",
+          "selected": false
+        },
+        {
+          "name": "60000",
+          "label": "60.000",
+          "selected": false
+        },
+        {
+          "name": "70000",
+          "label": "70.000",
+          "selected": false
+        },
+        {
+          "name": "80000",
+          "label": "80.000",
+          "selected": false
+        },
+        {
+          "name": "90000",
+          "label": "90.000",
+          "selected": false
+        },
+        {
+          "name": "100000",
+          "label": "100.000",
+          "selected": false
+        },
+        {
+          "name": "110000",
+          "label": "110.000",
+          "selected": false
+        },
+        {
+          "name": "120000",
+          "label": "120.000",
+          "selected": false
+        },
+        {
+          "name": "130000",
+          "label": "130.000",
+          "selected": false
+        },
+        {
+          "name": "140000",
+          "label": "140.000",
+          "selected": false
+        },
+        {
+          "name": "150000",
+          "label": "150.000",
+          "selected": false
+        },
+        {
+          "name": "175000",
+          "label": "175.000",
+          "selected": false
+        },
+        {
+          "name": "200000",
+          "label": "200.000",
+          "selected": false
+        },
+        {
+          "name": "250000",
+          "label": "250.000",
+          "selected": false
+        },
+        {
+          "name": "300000",
+          "label": "300.000",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "FrameHeightFrom",
+      "label": "Framehoogte van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "40",
+          "label": "40 cm",
+          "selected": false
+        },
+        {
+          "name": "45",
+          "label": "45 cm",
+          "selected": false
+        },
+        {
+          "name": "50",
+          "label": "50 cm",
+          "selected": false
+        },
+        {
+          "name": "55",
+          "label": "55 cm",
+          "selected": false
+        },
+        {
+          "name": "60",
+          "label": "60 cm",
+          "selected": false
+        },
+        {
+          "name": "65",
+          "label": "65 cm",
+          "selected": false
+        },
+        {
+          "name": "70",
+          "label": "70 cm",
+          "selected": false
+        },
+        {
+          "name": "75",
+          "label": "75 cm",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "FrameHeightTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "40",
+          "label": "40 cm",
+          "selected": false
+        },
+        {
+          "name": "45",
+          "label": "45 cm",
+          "selected": false
+        },
+        {
+          "name": "50",
+          "label": "50 cm",
+          "selected": false
+        },
+        {
+          "name": "55",
+          "label": "55 cm",
+          "selected": false
+        },
+        {
+          "name": "60",
+          "label": "60 cm",
+          "selected": false
+        },
+        {
+          "name": "65",
+          "label": "65 cm",
+          "selected": false
+        },
+        {
+          "name": "70",
+          "label": "70 cm",
+          "selected": false
+        },
+        {
+          "name": "75",
+          "label": "75 cm",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "PostalCode",
+      "label": "Postcode",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "City",
+      "label": "Plaats",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "Distance",
+      "label": "Afstand",
+      "disabled": true,
+      "selected": true,
+      "selectedValues": [
+        "Twenty"
+      ],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Five",
+          "label": "5 km",
+          "selected": false
+        },
+        {
+          "name": "Ten",
+          "label": "10 km",
+          "selected": false
+        },
+        {
+          "name": "Twenty",
+          "label": "20 km",
+          "selected": true
+        },
+        {
+          "name": "Thirty",
+          "label": "30 km",
+          "selected": false
+        },
+        {
+          "name": "Forty",
+          "label": "40 km",
+          "selected": false
+        },
+        {
+          "name": "Fifty",
+          "label": "50 km",
+          "selected": false
+        },
+        {
+          "name": "OneHundred",
+          "label": "100 km",
+          "selected": false
+        },
+        {
+          "name": "TwoHundred",
+          "label": "200 km",
+          "selected": false
+        },
+        {
+          "name": "ThreeHundred",
+          "label": "300 km",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "FullyServiced",
+      "label": "100% Onderhouden label",
+      "disabled": false,
+      "selected": false,
+      "tooltip": "<p><strong>100% Onderhouden label</strong><br><br>Met het 100% Onderhouden label worden auto’s gekenmerkt met volledige en kloppende onderhoudshistorie. Een auto zonder 100% Onderhouden label is niet per definitie een auto waar geen volledig onderhoud op gepleegd is.<br><br><a href=\"/100-procent-onderhouden\" title=\"Lees meer over het 100% Onderhouden label\" target=\"_blank\">Lees meer</a></p>",
+      "hidden": false
+    },
+    {
+      "name": "HasBovagChecklist",
+      "label": "BOVAG 40-Puntencheck",
+      "disabled": false,
+      "selected": false,
+      "tooltip": "<p><strong>BOVAG 40-Puntencheck</strong><br><br>Deze auto is gegarandeerd extra goed nagekeken op 40 specifieke punten.<br><br><a href=\"/bovag-puntencheck\" title=\"Lees meer over het BOVAG 40-Puntencheck\" target=\"_blank\">Lees meer</a></p>",
+      "hidden": false
+    },
+    {
+      "name": "HasBovagMaintenanceFree",
+      "label": "BOVAG Onderhoudsvrij",
+      "disabled": false,
+      "selected": false,
+      "tooltip": "<p><strong>BOVAG Onderhoudsvrij</strong><br><br>De auto is gecontroleerd op 7 vitale punten en je hebt geen onderhouds- of APK-kosten in de eerste 12 maanden of maximaal 10.000 kilometer (wat het eerst bereikt wordt).<br><br><a href=\"/bovag-onderhoudsvrij\" title=\"Lees meer over het BOVAG Onderhoudsvrij\" target=\"_blank\">Lees meer</a></p>",
+      "hidden": false
+    },
+    {
+      "name": "HasNapOrBit",
+      "label": "Logische Kilometerstand",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "HasBovagImportOdometerCheck",
+      "label": "BOVAG Import Tellercheck",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "CarServicedOnDelivery",
+      "label": "BOVAG Afleverbeurt",
+      "disabled": false,
+      "selected": false,
+      "tooltip": "<p><strong>BOVAG Afleverbeurt</strong><br><br>Deze auto is gegarandeerd een half jaar onderhoudsvrij!<br><br><a href=\"/bovag-afleverbeurt\" title=\"Lees meer over het BOVAG Afleverbeurt\" target=\"_blank\">Lees meer</a></p>",
+      "hidden": false
+    },
+    {
+      "name": "Keywords",
+      "label": "Trefwoord(en)",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "ModelKeywords",
+      "label": "Model",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "BodyType",
+      "label": "Categorie",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "AllRoad",
+          "label": "AllRoad",
+          "count": 535,
+          "selected": false
+        },
+        {
+          "name": "Chopper",
+          "label": "Chopper",
+          "count": 102,
+          "selected": false
+        },
+        {
+          "name": "Classic",
+          "label": "Classic",
+          "count": 4,
+          "selected": false
+        },
+        {
+          "name": "Crosser",
+          "label": "Crosser",
+          "count": 55,
+          "selected": false
+        },
+        {
+          "name": "Cruiser",
+          "label": "Cruiser",
+          "count": 24,
+          "selected": false
+        },
+        {
+          "name": "Enduro",
+          "label": "Enduro",
+          "count": 1,
+          "selected": false
+        },
+        {
+          "name": "Minibike",
+          "label": "Minibike",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Motorscooter",
+          "label": "Motorscooter",
+          "count": 196,
+          "selected": false
+        },
+        {
+          "name": "Naked",
+          "label": "Naked",
+          "count": 699,
+          "selected": false
+        },
+        {
+          "name": "Overig",
+          "label": "Overig",
+          "count": 123,
+          "selected": false
+        },
+        {
+          "name": "Quad",
+          "label": "Quad",
+          "count": 27,
+          "selected": false
+        },
+        {
+          "name": "Racer",
+          "label": "Racer",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Rally",
+          "label": "Rally",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Sport",
+          "label": "Sport",
+          "count": 55,
+          "selected": false
+        },
+        {
+          "name": "SportTouring",
+          "label": "Sport Touring",
+          "count": 149,
+          "selected": false
+        },
+        {
+          "name": "Supermotard",
+          "label": "Supermotard",
+          "count": 15,
+          "selected": false
+        },
+        {
+          "name": "SuperSport",
+          "label": "Supersport",
+          "count": 134,
+          "selected": false
+        },
+        {
+          "name": "Tourer",
+          "label": "Tourer",
+          "count": 325,
+          "selected": false
+        },
+        {
+          "name": "TouringEnduro",
+          "label": "Touring Enduro",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Trial",
+          "label": "Trial",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Trike",
+          "label": "Trike",
+          "count": 5,
+          "selected": false
+        },
+        {
+          "name": "Zijspan",
+          "label": "Zijspan",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "hasIcons": true,
+      "name": "FuelType",
+      "label": "Brandstof",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Benzine",
+          "label": "Benzine",
+          "count": 1282,
+          "selected": false
+        },
+        {
+          "name": "Elektriciteit",
+          "label": "Elektriciteit",
+          "count": 16,
+          "selected": false
+        },
+        {
+          "name": "Overige",
+          "label": "Overige",
+          "count": 1151,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "Transmission",
+      "label": "Transmissie",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Handgeschakeld",
+          "label": "Handgeschakeld",
+          "count": 2350,
+          "selected": false
+        },
+        {
+          "name": "Automatisch",
+          "label": "Automatisch",
+          "count": 96,
+          "selected": false
+        },
+        {
+          "name": "SemiAutomatisch",
+          "label": "Semi-Automatisch",
+          "count": 3,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "HasNapWeblabel",
+      "label": "Logische kilometerstand",
+      "disabled": false,
+      "selected": false,
+      "tooltip": "<p><strong>Logische kilometerstand</strong><br><br>We controleren of de kilometerstand logisch is. Daarvoor gebruiken we twee zekerheden: de Nationale Auto Pas voor auto’s met Nederlandse historie en de BOVAG Import Tellercheck voor importauto’s.<br><br><b>Nationale Auto Pas</b><br>De kilometerstand is geregistreerd en gecontroleerd via de Nationale Auto Pas (NAP). Zo krijg je inzicht in de kilometerhistorie en weet je of de stand logisch is (geen onverklaarbare terugval).<br><br><b>BOVAG Import Tellercheck</b><br>De kilometerstand van de importauto is gecontroleerd door minimaal 2 onafhankelijke bronnen, zodat je zeker weet dat deze klopt.<br><br><a href=\"/bovag-import-tellercheck\" title=\"Lees meer over het Logische kilometerstand\" target=\"_blank\">Lees meer</a></p>",
+      "hidden": false
+    },
+    {
+      "name": "VatDeductible",
+      "label": "BTW verrekenbaar",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "HideVatExcludedPrices",
+      "label": "Alleen incl. BTW prijzen",
+      "disabled": false,
+      "selected": true,
+      "hidden": false
+    },
+    {
+      "name": "ShowCommercialVehicles",
+      "label": "Toon ook zakelijke voertuigen",
+      "disabled": false,
+      "selected": true,
+      "hidden": false
+    },
+    {
+      "name": "InStock",
+      "label": "Alleen actueel aanbod",
+      "disabled": false,
+      "selected": true,
+      "hidden": false
+    },
+    {
+      "name": "VehicleType",
+      "label": "Voertuigsoort",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Motor",
+          "label": "Motor",
+          "count": 2449,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "FrameType",
+      "label": "Frametype",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Dames",
+          "label": "Dames",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "DamesMonotube",
+          "label": "Dames monotube",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Heren",
+          "label": "Heren",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Jongens",
+          "label": "Jongens",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "LageInstap",
+          "label": "Lage instap",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Meisjes",
+          "label": "Meisjes",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Mixed",
+          "label": "Mixed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Unisex",
+          "label": "Unisex",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "EnginePowerFrom",
+      "label": "Vermogen (pk) van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "EnginePower50",
+          "label": "50 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower75",
+          "label": "75 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower90",
+          "label": "90 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower100",
+          "label": "100 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower110",
+          "label": "110 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower125",
+          "label": "125 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower150",
+          "label": "150 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower170",
+          "label": "170 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower200",
+          "label": "200 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower250",
+          "label": "250 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower300",
+          "label": "300 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower350",
+          "label": "350 pk",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "EnginePowerTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "EnginePower50",
+          "label": "50 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower75",
+          "label": "75 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower90",
+          "label": "90 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower100",
+          "label": "100 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower110",
+          "label": "110 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower125",
+          "label": "125 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower150",
+          "label": "150 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower170",
+          "label": "170 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower200",
+          "label": "200 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower250",
+          "label": "250 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower300",
+          "label": "300 pk",
+          "selected": false
+        },
+        {
+          "name": "EnginePower350",
+          "label": "350 pk",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "AccelerationTo",
+      "label": "Acceleratie (0-100 km/u), sneller dan",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "4",
+          "label": "4 sec",
+          "selected": false
+        },
+        {
+          "name": "5",
+          "label": "5 sec",
+          "selected": false
+        },
+        {
+          "name": "6",
+          "label": "6 sec",
+          "selected": false
+        },
+        {
+          "name": "7",
+          "label": "7 sec",
+          "selected": false
+        },
+        {
+          "name": "8",
+          "label": "8 sec",
+          "selected": false
+        },
+        {
+          "name": "9",
+          "label": "9 sec",
+          "selected": false
+        },
+        {
+          "name": "10",
+          "label": "10 sec",
+          "selected": false
+        },
+        {
+          "name": "12",
+          "label": "12 sec",
+          "selected": false
+        },
+        {
+          "name": "15",
+          "label": "15 sec",
+          "selected": false
+        },
+        {
+          "name": "20",
+          "label": "20 sec",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "TopSpeedFrom",
+      "label": "Topsnelheid vanaf",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "140",
+          "label": "140 km/u",
+          "selected": false
+        },
+        {
+          "name": "150",
+          "label": "150 km/u",
+          "selected": false
+        },
+        {
+          "name": "160",
+          "label": "160 km/u",
+          "selected": false
+        },
+        {
+          "name": "170",
+          "label": "170 km/u",
+          "selected": false
+        },
+        {
+          "name": "180",
+          "label": "180 km/u",
+          "selected": false
+        },
+        {
+          "name": "190",
+          "label": "190 km/u",
+          "selected": false
+        },
+        {
+          "name": "200",
+          "label": "200 km/u",
+          "selected": false
+        },
+        {
+          "name": "250",
+          "label": "250 km/u",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "EngineCapacityFrom",
+      "label": "Motorinhoud van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "50",
+          "label": "50 cc",
+          "selected": false
+        },
+        {
+          "name": "125",
+          "label": "125 cc",
+          "selected": false
+        },
+        {
+          "name": "250",
+          "label": "250 cc",
+          "selected": false
+        },
+        {
+          "name": "350",
+          "label": "350 cc",
+          "selected": false
+        },
+        {
+          "name": "500",
+          "label": "500 cc",
+          "selected": false
+        },
+        {
+          "name": "750",
+          "label": "750 cc",
+          "selected": false
+        },
+        {
+          "name": "1000",
+          "label": "1.000 cc",
+          "selected": false
+        },
+        {
+          "name": "1500",
+          "label": "1.500 cc",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "EngineCapacityTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "50",
+          "label": "50 cc",
+          "selected": false
+        },
+        {
+          "name": "125",
+          "label": "125 cc",
+          "selected": false
+        },
+        {
+          "name": "250",
+          "label": "250 cc",
+          "selected": false
+        },
+        {
+          "name": "350",
+          "label": "350 cc",
+          "selected": false
+        },
+        {
+          "name": "500",
+          "label": "500 cc",
+          "selected": false
+        },
+        {
+          "name": "750",
+          "label": "750 cc",
+          "selected": false
+        },
+        {
+          "name": "1000",
+          "label": "1.000 cc",
+          "selected": false
+        },
+        {
+          "name": "1500",
+          "label": "1.500 cc",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BrakedTowingWeightFrom",
+      "label": "Trekgewicht (geremd) van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "BrakedTowingWeight750",
+          "label": "750 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight1000",
+          "label": "1000 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight1250",
+          "label": "1250 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight1600",
+          "label": "1600 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight2200",
+          "label": "2200 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight3000",
+          "label": "3000 kg",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BrakedTowingWeightTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "BrakedTowingWeight750",
+          "label": "750 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight1000",
+          "label": "1000 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight1250",
+          "label": "1250 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight1600",
+          "label": "1600 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight2200",
+          "label": "2200 kg",
+          "selected": false
+        },
+        {
+          "name": "BrakedTowingWeight3000",
+          "label": "3000 kg",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "hasIcons": true,
+      "name": "Color",
+      "label": "Kleur",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Zwart",
+          "label": "Zwart",
+          "count": 959,
+          "selected": false
+        },
+        {
+          "name": "Grijs",
+          "label": "Grijs",
+          "count": 255,
+          "selected": false
+        },
+        {
+          "name": "Wit",
+          "label": "Wit",
+          "count": 206,
+          "selected": false
+        },
+        {
+          "name": "Blauw",
+          "label": "Blauw",
+          "count": 266,
+          "selected": false
+        },
+        {
+          "name": "OverigeKleuren",
+          "label": "Overig",
+          "count": 409,
+          "selected": false
+        },
+        {
+          "name": "Rood",
+          "label": "Rood",
+          "count": 311,
+          "selected": false
+        },
+        {
+          "name": "Bruin",
+          "label": "Bruin",
+          "count": 16,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "Warranty",
+      "label": "Garantie",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Bovag12maanden",
+          "label": "12 maanden BOVAG Garantie",
+          "count": 2274,
+          "selected": false
+        },
+        {
+          "name": "Bovag24maanden",
+          "label": "24 maanden BOVAG Garantie",
+          "count": 3,
+          "selected": false
+        },
+        {
+          "name": "Fabrieksgarantie",
+          "label": "Fabrieksgarantie",
+          "count": 624,
+          "selected": false
+        },
+        {
+          "name": "Merkgarantie",
+          "label": "Merkgarantie",
+          "count": 139,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "Accessory",
+      "label": "Opties en accessoires",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Abs",
+          "label": "Anti Blokkeer Systeem (ABS)",
+          "selected": false
+        },
+        {
+          "name": "AdaptiveCruiseControl",
+          "label": "Adaptive Cruise Control",
+          "selected": false
+        },
+        {
+          "name": "Airco",
+          "label": "Airco",
+          "selected": false
+        },
+        {
+          "name": "Alarm",
+          "label": "Alarmsysteem",
+          "selected": false
+        },
+        {
+          "name": "AndroidAuto",
+          "label": "Android Auto",
+          "selected": false
+        },
+        {
+          "name": "AppleCarPlay",
+          "label": "Apple CarPlay",
+          "selected": false
+        },
+        {
+          "name": "Bas",
+          "label": "Brake Assist System (BAS)",
+          "selected": false
+        },
+        {
+          "name": "BluetoothCarkit",
+          "label": "Bluetooth carkit",
+          "selected": false
+        },
+        {
+          "name": "Buddyseat",
+          "label": "Buddyseat",
+          "selected": false
+        },
+        {
+          "name": "CruiseControl",
+          "label": "Cruise Control",
+          "selected": false
+        },
+        {
+          "name": "Dakraam",
+          "label": "Dakraam",
+          "selected": false
+        },
+        {
+          "name": "Dodehoekdetectie",
+          "label": "Dodehoekdetectie",
+          "selected": false
+        },
+        {
+          "name": "Esp",
+          "label": "Electronic Stability Program (ESP)",
+          "selected": false
+        },
+        {
+          "name": "GearIndicator",
+          "label": "Gear indicator",
+          "selected": false
+        },
+        {
+          "name": "Grootlichtassistent",
+          "label": "Grootlichtassistent",
+          "selected": false
+        },
+        {
+          "name": "Handkappen",
+          "label": "Handkappen",
+          "selected": false
+        },
+        {
+          "name": "Handvatverwarming",
+          "label": "Handvatverwarming",
+          "selected": false
+        },
+        {
+          "name": "LederenBekleding",
+          "label": "Lederen bekleding",
+          "selected": false
+        },
+        {
+          "name": "LedVerlichting",
+          "label": "LED verlichting",
+          "selected": false
+        },
+        {
+          "name": "LichtmetalenVelgen",
+          "label": "Lichtmetalen velgen",
+          "selected": false
+        },
+        {
+          "name": "MeesturendeKoplampen",
+          "label": "Meesturende koplampen",
+          "selected": false
+        },
+        {
+          "name": "Navigatie",
+          "label": "Navigatie",
+          "selected": false
+        },
+        {
+          "name": "Onderhoudsboekjes",
+          "label": "Onderhoudsboekjes",
+          "selected": false
+        },
+        {
+          "name": "Panoramadak",
+          "label": "Panoramadak",
+          "selected": false
+        },
+        {
+          "name": "Parkeersensoren",
+          "label": "Parkeersensoren",
+          "selected": false
+        },
+        {
+          "name": "Radio",
+          "label": "Radio",
+          "selected": false
+        },
+        {
+          "name": "Rijmodi",
+          "label": "Rijmodi",
+          "selected": false
+        },
+        {
+          "name": "Sportuitlaat",
+          "label": "Sportuitlaat",
+          "selected": false
+        },
+        {
+          "name": "Spraakbediening",
+          "label": "Spraakbediening",
+          "selected": false
+        },
+        {
+          "name": "Stoelverwarming",
+          "label": "Stoelverwarming",
+          "selected": false
+        },
+        {
+          "name": "Topkoffer",
+          "label": "Topkoffer",
+          "selected": false
+        },
+        {
+          "name": "Tractiecontrolesysteem",
+          "label": "Tractie Controle Systeem (TCS)",
+          "selected": false
+        },
+        {
+          "name": "TwaalfVoltAansluiting",
+          "label": "12V aansluiting",
+          "selected": false
+        },
+        {
+          "name": "Usb",
+          "label": "USB aansluiting",
+          "selected": false
+        },
+        {
+          "name": "Valbeugel",
+          "label": "Valbeugel",
+          "selected": false
+        },
+        {
+          "name": "XenonVerlichting",
+          "label": "Xenon verlichting",
+          "selected": false
+        },
+        {
+          "name": "Zijkoffer",
+          "label": "Zijkoffer",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "hasIcons": true,
+      "name": "Import",
+      "label": "Import voertuig",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Ja",
+          "label": "Ja",
+          "count": 299,
+          "selected": false
+        },
+        {
+          "name": "Nee",
+          "label": "Nee",
+          "count": 321,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "DoorCount",
+      "label": "Aantal deuren",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "One",
+          "label": "1",
+          "count": 3,
+          "selected": false
+        },
+        {
+          "name": "Two",
+          "label": "2",
+          "count": 2,
+          "selected": false
+        },
+        {
+          "name": "Three",
+          "label": "3",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Four",
+          "label": "4",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Five",
+          "label": "5",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "SixOrMore",
+          "label": "6+",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "SeatCount",
+      "label": "Aantal zitplaatsen",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "One",
+          "label": "1",
+          "count": 16,
+          "selected": false
+        },
+        {
+          "name": "Two",
+          "label": "2",
+          "count": 437,
+          "selected": false
+        },
+        {
+          "name": "Three",
+          "label": "3",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Four",
+          "label": "4",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Five",
+          "label": "5",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Six",
+          "label": "6",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Seven",
+          "label": "7",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Eight",
+          "label": "8",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Nine",
+          "label": "9",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "TenOrMore",
+          "label": "10+",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "GearCount",
+      "label": "Aantal versnellingen",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "None",
+          "label": "Geen",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "OneToFive",
+          "label": "1-5",
+          "count": 2,
+          "selected": false
+        },
+        {
+          "name": "ThreeToFour",
+          "label": "3-4",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "FiveToEight",
+          "label": "5-8",
+          "count": 38,
+          "selected": false
+        },
+        {
+          "name": "Six",
+          "label": "6",
+          "count": 463,
+          "selected": false
+        },
+        {
+          "name": "Seven",
+          "label": "7",
+          "count": 2,
+          "selected": false
+        },
+        {
+          "name": "EightOrMore",
+          "label": "8+",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "NineToFourteen",
+          "label": "9-14",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "FifteenToTwenty",
+          "label": "15-20",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "TwentyOneOrMore",
+          "label": "21+",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "Condition",
+      "label": "Staat",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Occasion",
+          "label": "Occasion",
+          "count": 1476,
+          "selected": false
+        },
+        {
+          "name": "Nieuw",
+          "label": "Nieuw",
+          "count": 973,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "DriversLicense",
+      "label": "Geschikt voor rijbewijstype",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "A",
+          "label": "A",
+          "count": 1556,
+          "selected": false
+        },
+        {
+          "name": "A1",
+          "label": "A1",
+          "count": 33,
+          "selected": false
+        },
+        {
+          "name": "A2",
+          "label": "A2",
+          "count": 490,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "WheelSizeFrom",
+      "label": "Wielmaat van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "10",
+          "label": "10 inch",
+          "selected": false
+        },
+        {
+          "name": "12",
+          "label": "12 inch",
+          "selected": false
+        },
+        {
+          "name": "14",
+          "label": "14 inch",
+          "selected": false
+        },
+        {
+          "name": "16",
+          "label": "16 inch",
+          "selected": false
+        },
+        {
+          "name": "18",
+          "label": "18 inch",
+          "selected": false
+        },
+        {
+          "name": "20",
+          "label": "20 inch",
+          "selected": false
+        },
+        {
+          "name": "22",
+          "label": "22 inch",
+          "selected": false
+        },
+        {
+          "name": "24",
+          "label": "24 inch",
+          "selected": false
+        },
+        {
+          "name": "26",
+          "label": "26 inch",
+          "selected": false
+        },
+        {
+          "name": "27",
+          "label": "27 inch",
+          "selected": false
+        },
+        {
+          "name": "28",
+          "label": "28 inch",
+          "selected": false
+        },
+        {
+          "name": "29",
+          "label": "29 inch",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "WheelSizeTo",
+      "label": "t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "10",
+          "label": "10 inch",
+          "selected": false
+        },
+        {
+          "name": "12",
+          "label": "12 inch",
+          "selected": false
+        },
+        {
+          "name": "14",
+          "label": "14 inch",
+          "selected": false
+        },
+        {
+          "name": "16",
+          "label": "16 inch",
+          "selected": false
+        },
+        {
+          "name": "18",
+          "label": "18 inch",
+          "selected": false
+        },
+        {
+          "name": "20",
+          "label": "20 inch",
+          "selected": false
+        },
+        {
+          "name": "22",
+          "label": "22 inch",
+          "selected": false
+        },
+        {
+          "name": "24",
+          "label": "24 inch",
+          "selected": false
+        },
+        {
+          "name": "26",
+          "label": "26 inch",
+          "selected": false
+        },
+        {
+          "name": "27",
+          "label": "27 inch",
+          "selected": false
+        },
+        {
+          "name": "28",
+          "label": "28 inch",
+          "selected": false
+        },
+        {
+          "name": "29",
+          "label": "29 inch",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BatteryPosition",
+      "label": "Accupositie",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Bagagedrager",
+          "label": "Bagagedrager",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Frame",
+          "label": "Frame",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Vloer",
+          "label": "Vloer",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Achterbank",
+          "label": "Achterbank",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Kofferbak",
+          "label": "Kofferbak",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Overig",
+          "label": "Overig",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "DriveType",
+      "label": "Type aandrijving",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Voorwiel",
+          "label": "Voorwiel",
+          "count": 7,
+          "selected": false
+        },
+        {
+          "name": "Achterwiel",
+          "label": "Achterwiel",
+          "count": 375,
+          "selected": false
+        },
+        {
+          "name": "Vierwiel",
+          "label": "Vierwiel",
+          "count": 1,
+          "selected": false
+        },
+        {
+          "name": "Trapas",
+          "label": "Trapas",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BatteryCapacityFrom",
+      "label": "Capaciteit accu van",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "200",
+          "label": "200 Wh",
+          "selected": false
+        },
+        {
+          "name": "250",
+          "label": "250 Wh",
+          "selected": false
+        },
+        {
+          "name": "300",
+          "label": "300 Wh",
+          "selected": false
+        },
+        {
+          "name": "350",
+          "label": "350 Wh",
+          "selected": false
+        },
+        {
+          "name": "400",
+          "label": "400 Wh",
+          "selected": false
+        },
+        {
+          "name": "450",
+          "label": "450 Wh",
+          "selected": false
+        },
+        {
+          "name": "500",
+          "label": "500 Wh",
+          "selected": false
+        },
+        {
+          "name": "600",
+          "label": "600 Wh",
+          "selected": false
+        },
+        {
+          "name": "700",
+          "label": "700 Wh",
+          "selected": false
+        },
+        {
+          "name": "800",
+          "label": "800 Wh",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BatteryCapacityTo",
+      "label": "Capaciteit accu t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "200",
+          "label": "200 Wh",
+          "selected": false
+        },
+        {
+          "name": "250",
+          "label": "250 Wh",
+          "selected": false
+        },
+        {
+          "name": "300",
+          "label": "300 Wh",
+          "selected": false
+        },
+        {
+          "name": "350",
+          "label": "350 Wh",
+          "selected": false
+        },
+        {
+          "name": "400",
+          "label": "400 Wh",
+          "selected": false
+        },
+        {
+          "name": "450",
+          "label": "450 Wh",
+          "selected": false
+        },
+        {
+          "name": "500",
+          "label": "500 Wh",
+          "selected": false
+        },
+        {
+          "name": "600",
+          "label": "600 Wh",
+          "selected": false
+        },
+        {
+          "name": "700",
+          "label": "700 Wh",
+          "selected": false
+        },
+        {
+          "name": "800",
+          "label": "800 Wh",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "EngineBrand",
+      "label": "Motormerk",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Bosch",
+          "label": "Bosch",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Yamaha",
+          "label": "Yamaha",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Stromer",
+          "label": "Stromer",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Giant",
+          "label": "Giant",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Brose",
+          "label": "Brose",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Panasonic",
+          "label": "Panasonic",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Shimano",
+          "label": "Shimano",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "EMotion",
+          "label": "E-motion",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Ion",
+          "label": "ION",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Bafang",
+          "label": "Bafang",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Gazelle",
+          "label": "Gazelle",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Cortina",
+          "label": "Cortina",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Flyer",
+          "label": "Flyer",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Overig",
+          "label": "Overig",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "CamperChassisBrand",
+      "label": "Merk voertuig",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": true,
+      "options": []
+    },
+    {
+      "name": "InteriorHeightFrom",
+      "label": "Sta hoogte vanaf",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "140",
+          "label": "140 cm",
+          "selected": false
+        },
+        {
+          "name": "150",
+          "label": "150 cm",
+          "selected": false
+        },
+        {
+          "name": "160",
+          "label": "160 cm",
+          "selected": false
+        },
+        {
+          "name": "170",
+          "label": "170 cm",
+          "selected": false
+        },
+        {
+          "name": "180",
+          "label": "180 cm",
+          "selected": false
+        },
+        {
+          "name": "190",
+          "label": "190 cm",
+          "selected": false
+        },
+        {
+          "name": "200",
+          "label": "200 cm",
+          "selected": false
+        },
+        {
+          "name": "250",
+          "label": "250 cm",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BedCount",
+      "label": "Aantal slaapplaatsen",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "One",
+          "label": "1",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Two",
+          "label": "2",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Three",
+          "label": "3",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Four",
+          "label": "4",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Five",
+          "label": "5",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "SixOrMore",
+          "label": "6+",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "SeatingLayout",
+      "label": "Zitindeling",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "DubbeleStandaardzit",
+          "label": "Dubbele standaardzit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "HalveTreinzit",
+          "label": "Halve treinzit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "KleineZit",
+          "label": "Kleine zit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "LVormZit",
+          "label": "L-vorm zit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "RondZit",
+          "label": "Ronde zit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Standaardzit",
+          "label": "Standaardzit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Treinzit",
+          "label": "Treinzit",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Middendinette",
+          "label": "Middendinette",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "SanitaryLayout",
+      "label": "Sanitairindeling",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "AchterOpstelling",
+          "label": "Achteropstelling",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "HoekOpstelling",
+          "label": "Hoekopstelling",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "MiddenOpstelling",
+          "label": "Middenopstelling",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BedLayout",
+      "label": "Bedindeling",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "TweeAparteBedden",
+          "label": "Twee aparte bedden",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Alkoofbed",
+          "label": "Alkoofbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Bovenbed",
+          "label": "Bovenbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "DwarsStapelbed",
+          "label": "Dwars stapelbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Dwarsbed",
+          "label": "Dwarsbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Fransbed",
+          "label": "Fransbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Hefbed",
+          "label": "Hefbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Kastbed",
+          "label": "Kastbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "LengteStapelbed",
+          "label": "Lengte stapelbed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Lengtebed",
+          "label": "Lengtebed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Slaapbank",
+          "label": "Slaapbank",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "VastBed",
+          "label": "Vast bed",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "VrijstaandBed",
+          "label": "Vrijstaand bed",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "KitchenLayout",
+      "label": "Keukenindeling",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Eindkeuken",
+          "label": "Eindkeuken",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Topkeuken",
+          "label": "Topkeuken",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Middenkeuken",
+          "label": "Middenkeuken",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "MaximumMassTo",
+      "label": "Max. toelaatbaar gewicht t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "500",
+          "label": "500 kg",
+          "selected": false
+        },
+        {
+          "name": "750",
+          "label": "750 kg",
+          "selected": false
+        },
+        {
+          "name": "1000",
+          "label": "1.000 kg",
+          "selected": false
+        },
+        {
+          "name": "1200",
+          "label": "1.200 kg",
+          "selected": false
+        },
+        {
+          "name": "1400",
+          "label": "1.400 kg",
+          "selected": false
+        },
+        {
+          "name": "1600",
+          "label": "1.600 kg",
+          "selected": false
+        },
+        {
+          "name": "1800",
+          "label": "1.800 kg",
+          "selected": false
+        },
+        {
+          "name": "2000",
+          "label": "2.000 kg",
+          "selected": false
+        },
+        {
+          "name": "2500",
+          "label": "2.500 kg",
+          "selected": false
+        },
+        {
+          "name": "3000",
+          "label": "3.000 kg",
+          "selected": false
+        },
+        {
+          "name": "3500",
+          "label": "3.500 kg",
+          "selected": false
+        },
+        {
+          "name": "4000",
+          "label": "4.000 kg",
+          "selected": false
+        },
+        {
+          "name": "4500",
+          "label": "4.500 kg",
+          "selected": false
+        },
+        {
+          "name": "5000",
+          "label": "5.000 kg",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "EmptyMassTo",
+      "label": "Gewicht t/m",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "500",
+          "label": "500 kg",
+          "selected": false
+        },
+        {
+          "name": "750",
+          "label": "750 kg",
+          "selected": false
+        },
+        {
+          "name": "1000",
+          "label": "1.000 kg",
+          "selected": false
+        },
+        {
+          "name": "1200",
+          "label": "1.200 kg",
+          "selected": false
+        },
+        {
+          "name": "1400",
+          "label": "1.400 kg",
+          "selected": false
+        },
+        {
+          "name": "1600",
+          "label": "1.600 kg",
+          "selected": false
+        },
+        {
+          "name": "1800",
+          "label": "1.800 kg",
+          "selected": false
+        },
+        {
+          "name": "2000",
+          "label": "2.000 kg",
+          "selected": false
+        },
+        {
+          "name": "2500",
+          "label": "2.500 kg",
+          "selected": false
+        },
+        {
+          "name": "3000",
+          "label": "3.000 kg",
+          "selected": false
+        },
+        {
+          "name": "3500",
+          "label": "3.500 kg",
+          "selected": false
+        },
+        {
+          "name": "4000",
+          "label": "4.000 kg",
+          "selected": false
+        },
+        {
+          "name": "4500",
+          "label": "4.500 kg",
+          "selected": false
+        },
+        {
+          "name": "5000",
+          "label": "5.000 kg",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "FrameMaterial",
+      "label": "Framemateriaal",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Aluminium",
+          "label": "Aluminium",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Carbon",
+          "label": "Carbon",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "ChroomMolybdeen",
+          "label": "Chroom-molybdeen",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Scandium",
+          "label": "Scandium",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Staal",
+          "label": "Staal",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Tica",
+          "label": "Tica",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Titanium",
+          "label": "Titanium",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BrakeType",
+      "label": "Remsysteem",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "RollerBrake",
+          "label": "Rollerbrakes",
+          "count": 0,
+          "selected": false,
+          "tooltip": "Rollerbrakes zijn de moderne opvolger van de trommelrem. Trommelremmen vind je veelal op oudere stadsfietsen."
+        },
+        {
+          "name": "Schijfrem",
+          "label": "Schijfremmen",
+          "count": 6,
+          "selected": false,
+          "tooltip": "Mechanische schijfremmen zijn vrijwel onderhoudsvrij en makkelijk zelf af te stellen. Nadeel is dat ze vaak aanlopen als je door zand of water hebt gereden. Je moet ze daardoor vaker afstellen. De remkracht is iets minder.<br>Hydraulische schijfremmen zijn krachtiger, nauwkeuriger te doseren en betrouwbaarder.<br>Nadeel is dat in sommige DOT-5 olie wordt gebruikt. Dit trekt vocht <i>in</i> de kabels aan, waardoor je ze jaarlijks moet ontluchten."
+        },
+        {
+          "name": "Velgrem",
+          "label": "Velgremmen",
+          "count": 0,
+          "selected": false,
+          "tooltip": "Bij mechanische velgremmen is de remkracht <i>veel</i> minder dan bij hydraulische.<br>Ze zijn makkelijk zelf af te stellen, maar minder te doseren en zowel de velg als de remblokken slijten vaak sneller.<br>Bij hydraulische velgremmen is de remkracht <i>veel</i> sterker dan bij mechanische. Ze zijn betrouwbaar, goed te doseren en onderhoudsarm."
+        },
+        {
+          "name": "Terugtraprem",
+          "label": "Terugtraprem",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BatteryRemovable",
+      "label": "Accu uitneembaar",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Uitneembaar",
+          "label": "Ja, uitneembaar",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "NietUitneembaar",
+          "label": "Nee, vast",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "IsLeaseable",
+      "label": "Toon alleen leasefietsen",
+      "disabled": false,
+      "selected": false,
+      "tooltip": "<strong>Leaseprijs</strong><br/><span>Voor dit maandbedrag lease je deze fiets. De getoonde leaseprijs is inclusief BTW, per maand en geldt voor een looptijd van 36 maanden. Het leasebedrag is een vast bedrag per maand en is incl. verzekering, onderhoud en reparaties. Let op: deze leaseprijs is een indicatie. De offerte is altijd leidend. Ontdek het gemak van <a href=\"/lease/fiets-lease\" target=\"_blank\">BOVAG Leasefiets</a>.</span>",
+      "hidden": false
+    },
+    {
+      "name": "EnergyLabel",
+      "label": "Energielabel",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "A",
+          "label": "A",
+          "count": 1,
+          "selected": false
+        },
+        {
+          "name": "C",
+          "label": "C",
+          "count": 1,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "CylinderCount",
+      "label": "Aantal cilinders",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Two",
+          "label": "2",
+          "count": 627,
+          "selected": false
+        },
+        {
+          "name": "Three",
+          "label": "3",
+          "count": 108,
+          "selected": false
+        },
+        {
+          "name": "Four",
+          "label": "4",
+          "count": 191,
+          "selected": false
+        },
+        {
+          "name": "Five",
+          "label": "5",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "Six",
+          "label": "6",
+          "count": 13,
+          "selected": false
+        },
+        {
+          "name": "Eight",
+          "label": "8",
+          "count": 0,
+          "selected": false
+        },
+        {
+          "name": "TenOrMore",
+          "label": "10+",
+          "count": 0,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "AvailableSince",
+      "label": "Aangeboden sinds",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Today",
+          "label": "Vandaag",
+          "count": 3,
+          "selected": false
+        },
+        {
+          "name": "Yesterday",
+          "label": "Gisteren",
+          "count": 10,
+          "selected": false
+        },
+        {
+          "name": "TheDayBeforeYesterday",
+          "label": "Eergisteren",
+          "count": 21,
+          "selected": false
+        },
+        {
+          "name": "OneWeek",
+          "label": "Een week",
+          "count": 55,
+          "selected": false
+        },
+        {
+          "name": "TwoWeeks",
+          "label": "Twee weken",
+          "count": 159,
+          "selected": false
+        },
+        {
+          "name": "OneMonth",
+          "label": "Een maand",
+          "count": 357,
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "IsFinanceable",
+      "label": "Financiering beschikbaar",
+      "disabled": false,
+      "selected": false,
+      "hidden": false
+    },
+    {
+      "name": "SpecifiedBatteryRange",
+      "label": "Actieradius Elektrisch vanaf",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "25",
+          "label": "25 km",
+          "selected": false
+        },
+        {
+          "name": "50",
+          "label": "50 km",
+          "selected": false
+        },
+        {
+          "name": "75",
+          "label": "75 km",
+          "selected": false
+        },
+        {
+          "name": "100",
+          "label": "100 km",
+          "selected": false
+        },
+        {
+          "name": "150",
+          "label": "150 km",
+          "selected": false
+        },
+        {
+          "name": "200",
+          "label": "200 km",
+          "selected": false
+        },
+        {
+          "name": "300",
+          "label": "300 km",
+          "selected": false
+        },
+        {
+          "name": "400",
+          "label": "400 km",
+          "selected": false
+        },
+        {
+          "name": "500",
+          "label": "500 km",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "BatteryCapacityTechnical",
+      "label": "Accu Capaciteit vanaf",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "10",
+          "label": "10 kWh",
+          "selected": false
+        },
+        {
+          "name": "20",
+          "label": "20 kWh",
+          "selected": false
+        },
+        {
+          "name": "30",
+          "label": "30 kWh",
+          "selected": false
+        },
+        {
+          "name": "40",
+          "label": "40 kWh",
+          "selected": false
+        },
+        {
+          "name": "50",
+          "label": "50 kWh",
+          "selected": false
+        },
+        {
+          "name": "60",
+          "label": "60 kWh",
+          "selected": false
+        },
+        {
+          "name": "70",
+          "label": "70 kWh",
+          "selected": false
+        },
+        {
+          "name": "80",
+          "label": "80 kWh",
+          "selected": false
+        },
+        {
+          "name": "90",
+          "label": "90 kWh",
+          "selected": false
+        },
+        {
+          "name": "100",
+          "label": "100 kWh",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "MaxChargingPowerHome",
+      "label": "AC Laadvermogen (thuisladen) vanaf",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "3",
+          "label": "3 kW",
+          "selected": false
+        },
+        {
+          "name": "6",
+          "label": "6 kW",
+          "selected": false
+        },
+        {
+          "name": "7",
+          "label": "7 kW",
+          "selected": false
+        },
+        {
+          "name": "11",
+          "label": "11 kW",
+          "selected": false
+        },
+        {
+          "name": "22",
+          "label": "22 kW",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "MaxQuickChargingPower",
+      "label": "DC Laadvermogen (snelladen) vanaf",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "30",
+          "label": "30 kW",
+          "selected": false
+        },
+        {
+          "name": "40",
+          "label": "40 kW",
+          "selected": false
+        },
+        {
+          "name": "50",
+          "label": "50 kW",
+          "selected": false
+        },
+        {
+          "name": "75",
+          "label": "75 kW",
+          "selected": false
+        },
+        {
+          "name": "100",
+          "label": "100 kW",
+          "selected": false
+        },
+        {
+          "name": "120",
+          "label": "120 kW",
+          "selected": false
+        },
+        {
+          "name": "150",
+          "label": "150 kW",
+          "selected": false
+        },
+        {
+          "name": "200",
+          "label": "200 kW",
+          "selected": false
+        },
+        {
+          "name": "240",
+          "label": "240 kW",
+          "selected": false
+        },
+        {
+          "name": "350",
+          "label": "350 kW",
+          "selected": false
+        }
+      ]
+    },
+    {
+      "name": "IsPluginHybride",
+      "label": "Plugin Hybride",
+      "disabled": false,
+      "selected": false,
+      "selectedValues": [],
+      "hidden": false,
+      "options": [
+        {
+          "name": "Nee",
+          "label": "Nee",
+          "count": 2,
+          "selected": false
+        }
+      ]
+    }
+  ],
+  "searchResultsPageUrl": "/motoren"
+}

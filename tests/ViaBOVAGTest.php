@@ -11,18 +11,28 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use NiekNijland\ViaBOVAG\Data\AvailableSince;
 use NiekNijland\ViaBOVAG\Data\BicycleSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\BovagWarranty;
 use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\CamperSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\Condition;
+use NiekNijland\ViaBOVAG\Data\CylinderCount;
+use NiekNijland\ViaBOVAG\Data\DriversLicense;
 use NiekNijland\ViaBOVAG\Data\FacetName;
 use NiekNijland\ViaBOVAG\Data\FilterOption;
+use NiekNijland\ViaBOVAG\Data\GearCount;
+use NiekNijland\ViaBOVAG\Data\Listing;
 use NiekNijland\ViaBOVAG\Data\MobilityType;
 use NiekNijland\ViaBOVAG\Data\Model;
 use NiekNijland\ViaBOVAG\Data\MotorcycleBodyType;
 use NiekNijland\ViaBOVAG\Data\MotorcycleFuelType;
 use NiekNijland\ViaBOVAG\Data\MotorcycleSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\SearchQuery;
+use NiekNijland\ViaBOVAG\Data\SeatCount;
 use NiekNijland\ViaBOVAG\Data\SortOrder;
+use NiekNijland\ViaBOVAG\Data\TransmissionType;
 use NiekNijland\ViaBOVAG\Exception\NotFoundException;
 use NiekNijland\ViaBOVAG\Exception\ViaBOVAGException;
 use NiekNijland\ViaBOVAG\ViaBOVAG;
@@ -74,22 +84,22 @@ class ViaBOVAGTest extends TestCase
         return new ViaBOVAG(httpClient: $httpClient);
     }
 
-    // --- Build ID Extraction ---
+    // --- Build ID Extraction (for detail pages) ---
 
     public function test_extracts_build_id_from_homepage(): void
     {
         $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $detailJson = $this->fixture('listing-detail.json');
 
         $mock = new MockHandler([
             new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
+            new Response(200, [], $detailJson),
         ]);
 
         $client = $this->createClient($mock);
-        $result = $client->search(new MotorcycleSearchCriteria);
+        $detail = $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
 
-        $this->assertNotEmpty($result->listings);
+        $this->assertNotEmpty($detail->id);
     }
 
     public function test_throws_exception_when_build_id_not_found(): void
@@ -103,18 +113,16 @@ class ViaBOVAGTest extends TestCase
         $this->expectException(ViaBOVAGException::class);
         $this->expectExceptionMessage('Could not extract build ID');
 
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
     }
 
-    // --- Search Results Parsing ---
+    // --- Search Results Parsing (REST API) ---
 
     public function test_parses_search_results(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -135,11 +143,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_parses_car_search_results_with_auto_mobility_type(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->buildSearchJsonWithMobilityType(mobilityType: 'auto');
+        $searchJson = $this->buildSearchJson(listingCount: 1, totalCount: 1, mobilityType: 'auto');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -151,11 +157,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_parses_bicycle_search_results_with_fiets_mobility_type(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->buildSearchJsonWithMobilityType(mobilityType: 'fiets');
+        $searchJson = $this->buildSearchJson(listingCount: 1, totalCount: 1, mobilityType: 'fiets');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -167,11 +171,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_search_result_pagination_helpers(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -186,12 +188,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_brands_returns_brand_value_objects(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $facetsJson = $this->fixture('search-facets-api.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -216,12 +216,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_brands_does_not_depend_on_listing_parsing(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithInvalidListingMobilityTypeJson = '{"pageProps":{"serverSearchResults":{"results":[{"id":"test-id","mobilityType":"unknown-type"}],"count":1},"serverSearchFacets":{"facets":[{"name":"Brand","label":"Merk","options":[{"name":"tesla","label":"Tesla","count":12}],"optionCategories":[]}]}}}';
+        $facetsJson = '{"count":1,"facets":[{"name":"Brand","label":"Merk","options":[{"name":"tesla","label":"Tesla","count":12}],"optionCategories":[]}]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithInvalidListingMobilityTypeJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -233,33 +231,29 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_brands_uses_requested_mobility_type(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $facetsJson = $this->fixture('search-facets-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClientWithHistory($mock, $history);
         $client->getBrands(MobilityType::Car);
 
-        /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = $searchRequest->getUri()->getQuery();
+        /** @var Request $facetsRequest */
+        $facetsRequest = $history[0]['request'];
+        $body = json_decode((string) $facetsRequest->getBody(), true);
 
-        $this->assertStringContainsString('mobilityType=auto', $query);
+        $this->assertSame('auto', $body['MobilityType']);
     }
 
     public function test_get_brands_returns_empty_when_brand_facet_is_missing(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithoutFacetsJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0}}}';
+        $facetsJson = '{"count":0,"facets":[]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithoutFacetsJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -270,12 +264,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_brands_supports_top_level_brand_options(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithTopLevelBrandOptionsJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"Brand","label":"Merk","options":[{"name":"tesla","label":"Tesla","count":12}],"optionCategories":[]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"Brand","label":"Merk","options":[{"name":"tesla","label":"Tesla","count":12}],"optionCategories":[]}]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithTopLevelBrandOptionsJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -289,12 +281,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_facet_options_returns_filter_option_value_objects(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithEngineBrandFacetJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"EngineBrand","label":"Motormerk","options":[{"name":"bosch","label":"Bosch","count":18},{"name":"shimano","label":"Shimano","count":7}],"optionCategories":[]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"EngineBrand","label":"Motormerk","options":[{"name":"bosch","label":"Bosch","count":18},{"name":"shimano","label":"Shimano","count":7}],"optionCategories":[]}]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithEngineBrandFacetJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -309,13 +299,11 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_facet_options_includes_brand_and_model_filters_when_provided(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithFrameTypeFacetJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"FrameType","label":"Frametype","options":[],"optionCategories":[]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"FrameType","label":"Frametype","options":[],"optionCategories":[]}]}';
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithFrameTypeFacetJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClientWithHistory($mock, $history);
@@ -326,22 +314,20 @@ class ViaBOVAGTest extends TestCase
             new Model(slug: 'mt-07', label: 'MT-07'),
         );
 
-        /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = urldecode($searchRequest->getUri()->getQuery());
+        /** @var Request $facetsRequest */
+        $facetsRequest = $history[0]['request'];
+        $body = json_decode((string) $facetsRequest->getBody(), true);
 
-        $this->assertStringContainsString('selectedFilters=merk-yamaha', $query);
-        $this->assertStringContainsString('selectedFilters=model-mt-07', $query);
+        $this->assertSame(['yamaha'], $body['Brand']);
+        $this->assertSame('mt-07', $body['Model']);
     }
 
     public function test_get_facet_options_supports_option_categories(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithFrameTypeCategoriesJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"FrameType","label":"Frametype","options":[],"optionCategories":[{"label":"Populair","options":[{"name":"dubbel-wieg","label":"Dubbel wieg","count":3}]}]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"FrameType","label":"Frametype","options":[],"optionCategories":[{"label":"Populair","options":[{"name":"dubbel-wieg","label":"Dubbel wieg","count":3}]}]}]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithFrameTypeCategoriesJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -355,12 +341,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_facet_options_returns_empty_when_facet_is_missing(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithoutFacetsJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0}}}';
+        $facetsJson = '{"count":0,"facets":[]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithoutFacetsJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -371,12 +355,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_models_returns_model_value_objects(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithModelOptionsJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"Model","label":"Type uitvoering","options":[{"name":"golf","label":"Golf","count":48},{"name":"polo","label":"Polo","count":22}],"optionCategories":[]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"Model","label":"Type uitvoering","options":[{"name":"golf","label":"Golf","count":48},{"name":"polo","label":"Polo","count":22}],"optionCategories":[]}]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithModelOptionsJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -394,13 +376,11 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_models_includes_brand_filter_when_brand_is_provided(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithModelOptionsJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"Model","label":"Type uitvoering","options":[],"optionCategories":[]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"Model","label":"Type uitvoering","options":[],"optionCategories":[]}]}';
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithModelOptionsJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClientWithHistory($mock, $history);
@@ -409,21 +389,19 @@ class ViaBOVAGTest extends TestCase
             new Brand(slug: 'volkswagen', label: 'Volkswagen'),
         );
 
-        /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = urldecode($searchRequest->getUri()->getQuery());
+        /** @var Request $facetsRequest */
+        $facetsRequest = $history[0]['request'];
+        $body = json_decode((string) $facetsRequest->getBody(), true);
 
-        $this->assertStringContainsString('selectedFilters=merk-volkswagen', $query);
+        $this->assertSame(['volkswagen'], $body['Brand']);
     }
 
     public function test_get_models_supports_option_categories(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithModelCategoriesJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0},"serverSearchFacets":{"facets":[{"name":"Model","label":"Type uitvoering","options":[],"optionCategories":[{"label":"Populair","options":[{"name":"gsx-r-1000","label":"GSX-R 1000","count":10}]}]}]}}}';
+        $facetsJson = '{"count":0,"facets":[{"name":"Model","label":"Type uitvoering","options":[],"optionCategories":[{"label":"Populair","options":[{"name":"gsx-r-1000","label":"GSX-R 1000","count":10}]}]}]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithModelCategoriesJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -436,12 +414,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_models_returns_empty_when_model_facet_is_missing(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchWithoutFacetsJson = '{"pageProps":{"serverSearchResults":{"results":[],"count":0}}}';
+        $facetsJson = '{"count":0,"facets":[]}';
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchWithoutFacetsJson),
+            new Response(200, [], $facetsJson),
         ]);
 
         $client = $this->createClient($mock);
@@ -450,7 +426,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame([], $models);
     }
 
-    // --- Detail Parsing ---
+    // --- Detail Parsing (still uses _next/data) ---
 
     public function test_parses_listing_detail(): void
     {
@@ -494,13 +470,15 @@ class ViaBOVAGTest extends TestCase
 
     public function test_get_detail_from_listing(): void
     {
+        $searchJson = $this->fixture('search-results-api.json');
         $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
         $detailJson = $this->fixture('listing-detail.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
+            // Search via REST API (no homepage needed)
             new Response(200, [], $searchJson),
+            // Detail via _next/data (needs homepage for build ID)
+            new Response(200, [], $homepageHtml),
             new Response(200, [], $detailJson),
         ]);
 
@@ -511,12 +489,12 @@ class ViaBOVAGTest extends TestCase
         $this->assertNotEmpty($detail->id);
     }
 
-    // --- Stale Build ID Retry ---
+    // --- Stale Build ID Retry (detail pages only) ---
 
     public function test_retries_on_stale_build_id(): void
     {
         $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $detailJson = $this->fixture('listing-detail.json');
 
         // Build a homepage with a different build ID for the retry
         $newHomepageHtml = str_replace('PQS_ur-FpJe0R6JUyWiD2', 'NEW_BUILD_ID_12345', $homepageHtml);
@@ -524,18 +502,18 @@ class ViaBOVAGTest extends TestCase
         $mock = new MockHandler([
             // First: fetch homepage for build ID
             new Response(200, [], $homepageHtml),
-            // Second: search returns 404 (stale build ID)
+            // Second: detail returns 404 (stale build ID)
             new Response(404, [], ''),
             // Third: re-fetch homepage for new build ID
             new Response(200, [], $newHomepageHtml),
-            // Fourth: retry search with new build ID
-            new Response(200, [], $searchJson),
+            // Fourth: retry detail with new build ID
+            new Response(200, [], $detailJson),
         ]);
 
         $client = $this->createClient($mock);
-        $result = $client->search(new MotorcycleSearchCriteria);
+        $detail = $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
 
-        $this->assertCount(24, $result->listings);
+        $this->assertNotEmpty($detail->id);
     }
 
     public function test_throws_exception_on_double_404(): void
@@ -554,68 +532,68 @@ class ViaBOVAGTest extends TestCase
         $this->expectException(NotFoundException::class);
         $this->expectExceptionMessage('404');
 
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
     }
 
-    // --- Cache ---
+    // --- Cache (for build ID, used by detail pages) ---
 
     public function test_caches_build_id(): void
     {
         $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $detailJson = $this->fixture('listing-detail.json');
 
         $cache = new ArrayCache;
 
         $mock = new MockHandler([
-            // First request: fetch homepage + search
+            // First detail: fetch homepage + detail
             new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
-            // Second request: only search (build ID from cache)
-            new Response(200, [], $searchJson),
+            new Response(200, [], $detailJson),
+            // Second detail: only detail (build ID from cache)
+            new Response(200, [], $detailJson),
         ]);
 
         $client = $this->createClientWithCache($mock, $cache);
 
         // First call — fetches homepage for build ID
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
 
         $this->assertTrue($cache->has('viabovag:build-id'));
 
         // Second call — uses cached build ID
-        $result = $client->search(new MotorcycleSearchCriteria);
+        $detail = $client->getDetailBySlug('test-slug-2', MobilityType::Motorcycle);
 
-        $this->assertCount(24, $result->listings);
+        $this->assertNotEmpty($detail->id);
     }
 
     public function test_reset_session_clears_cache(): void
     {
         $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $detailJson = $this->fixture('listing-detail.json');
 
         $cache = new ArrayCache;
 
         $mock = new MockHandler([
             new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
-            // After reset: fetch homepage again + search
+            new Response(200, [], $detailJson),
+            // After reset: fetch homepage again + detail
             new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
+            new Response(200, [], $detailJson),
         ]);
 
         $client = $this->createClientWithCache($mock, $cache);
 
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
         $this->assertTrue($cache->has('viabovag:build-id'));
 
         $client->resetSession();
         $this->assertFalse($cache->has('viabovag:build-id'));
 
         // Next call re-fetches homepage
-        $result = $client->search(new MotorcycleSearchCriteria);
-        $this->assertCount(24, $result->listings);
+        $detail = $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
+        $this->assertNotEmpty($detail->id);
     }
 
-    // --- SearchCriteria URL Mapping ---
+    // --- SearchCriteria Filter Slugs (kept for backward compatibility) ---
 
     public function test_search_criteria_filter_slugs_brand_and_model(): void
     {
@@ -674,14 +652,278 @@ class ViaBOVAGTest extends TestCase
         $this->assertEmpty($slugs);
     }
 
+    // --- SearchCriteria Request Body ---
+
+    public function test_search_criteria_request_body_defaults(): void
+    {
+        $criteria = new MotorcycleSearchCriteria;
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('motor', $body['MobilityType']);
+        $this->assertTrue($body['InStock']);
+        $this->assertTrue($body['ShowCommercialVehicles']);
+        $this->assertTrue($body['HideVatExcludedPrices']);
+        $this->assertArrayNotHasKey('PageNumber', $body);
+        $this->assertArrayNotHasKey('Brand', $body);
+    }
+
+    public function test_search_criteria_request_body_with_filters(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            brand: new Brand(slug: 'honda', label: 'Honda'),
+            model: new Model(slug: 'cb-650-r', label: 'CB 650 R'),
+            priceFrom: 3000,
+            priceTo: 10000,
+            bodyTypes: [MotorcycleBodyType::Naked, MotorcycleBodyType::Sport],
+            fuelTypes: [MotorcycleFuelType::Petrol],
+            sortOrder: SortOrder::PriceAscending,
+            page: 2,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['honda'], $body['Brand']);
+        $this->assertSame('cb-650-r', $body['Model']);
+        $this->assertSame(3000, $body['PriceFrom']);
+        $this->assertSame(10000, $body['PriceTo']);
+        $this->assertSame(['Naked', 'Sport'], $body['BodyType']);
+        $this->assertSame(['Benzine'], $body['FuelType']);
+        $this->assertSame('prijsOplopend', $body['SortOrder']);
+        $this->assertSame(2, $body['PageNumber']);
+    }
+
+    public function test_search_criteria_request_body_uses_array_based_api_filters(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            transmission: TransmissionType::Manual,
+            condition: Condition::New,
+            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
+            driversLicense: DriversLicense::A,
+            warranty: BovagWarranty::TwelveMonths,
+            hasNapWeblabel: true,
+            isImported: true,
+            availableSince: AvailableSince::OneWeek,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['Handgeschakeld'], $body['Transmission']);
+        $this->assertSame(['A'], $body['DriversLicense']);
+        $this->assertSame(['dubbel-wieg'], $body['FrameType']);
+        $this->assertSame(['Nieuw'], $body['Condition']);
+        $this->assertSame(['Bovag12maanden'], $body['Warranty']);
+        $this->assertTrue($body['HasNapOrBit']);
+        $this->assertArrayNotHasKey('HasNapWeblabel', $body);
+        $this->assertSame(['Ja'], $body['Import']);
+        $this->assertSame('OneWeek', $body['AvailableSince']);
+    }
+
+    public function test_search_criteria_request_body_formats_import_false_as_array(): void
+    {
+        $criteria = new CarSearchCriteria(isImported: false);
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['Nee'], $body['Import']);
+    }
+
+    public function test_search_criteria_request_body_uses_has_nap_web_label_for_cars(): void
+    {
+        $criteria = new CarSearchCriteria(hasNapWeblabel: true);
+        $body = $criteria->toRequestBody();
+
+        $this->assertTrue($body['HasNapWeblabel']);
+        $this->assertArrayNotHasKey('HasNapOrBit', $body);
+    }
+
+    public function test_search_criteria_request_body_normalizes_model_keywords_from_slug_style(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(modelKeywords: 'mt-10-sp');
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('mt 10 sp', $body['ModelKeywords']);
+    }
+
+    public function test_search_criteria_request_body_supports_multi_select_filters(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            transmission: TransmissionType::Manual,
+            condition: Condition::New,
+            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
+            driversLicense: DriversLicense::A,
+            warranty: BovagWarranty::TwelveMonths,
+            conditions: [Condition::Used, Condition::New],
+            warranties: [BovagWarranty::Manufacturer],
+            transmissions: [TransmissionType::Automatic, TransmissionType::Manual],
+            driversLicenses: [DriversLicense::A2],
+            frameTypes: [new FilterOption(slug: 'trellis', label: 'Trellis')],
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['Nieuw', 'Occasion'], $body['Condition']);
+        $this->assertSame(['Bovag12maanden', 'Fabrieksgarantie'], $body['Warranty']);
+        $this->assertSame(['Handgeschakeld', 'Automatisch'], $body['Transmission']);
+        $this->assertSame(['A', 'A2'], $body['DriversLicense']);
+        $this->assertSame(['dubbel-wieg', 'trellis'], $body['FrameType']);
+    }
+
+    public function test_search_criteria_request_body_supports_multi_select_transmission_for_car(): void
+    {
+        $criteria = new CarSearchCriteria(
+            transmission: TransmissionType::Automatic,
+            transmissions: [TransmissionType::Manual],
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['Automatisch', 'Handgeschakeld'], $body['Transmission']);
+    }
+
+    public function test_search_criteria_request_body_supports_multi_select_filter_options_for_car(): void
+    {
+        $criteria = new CarSearchCriteria(
+            cities: [
+                new FilterOption(slug: 'amsterdam', label: 'Amsterdam'),
+                new FilterOption(slug: 'utrecht', label: 'Utrecht'),
+            ],
+            energyLabels: [
+                new FilterOption(slug: 'A', label: 'A'),
+                new FilterOption(slug: 'B', label: 'B'),
+            ],
+            specifiedBatteryRanges: [
+                new FilterOption(slug: '300-400', label: '300-400 km'),
+                new FilterOption(slug: '400-500', label: '400-500 km'),
+            ],
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['amsterdam', 'utrecht'], $body['City']);
+        $this->assertSame(['A', 'B'], $body['EnergyLabel']);
+        $this->assertSame(['300-400', '400-500'], $body['SpecifiedBatteryRange']);
+    }
+
+    public function test_search_criteria_request_body_uses_api_tokens_for_gear_cylinder_and_seat_counts(): void
+    {
+        $criteria = new CarSearchCriteria(
+            gearCounts: [GearCount::Five, GearCount::Eight],
+            cylinderCounts: [CylinderCount::Four, CylinderCount::Ten],
+            seatCounts: [SeatCount::Five],
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['OneToFive', 'EightOrMore'], $body['GearCount']);
+        $this->assertSame(['Four', 'TenOrMore'], $body['CylinderCount']);
+        $this->assertSame(['Five'], $body['SeatCount']);
+    }
+
+    public function test_search_criteria_request_body_formats_single_energy_label_as_array(): void
+    {
+        $criteria = new CarSearchCriteria(
+            energyLabel: new FilterOption(slug: 'A', label: 'A'),
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['A'], $body['EnergyLabel']);
+    }
+
+    public function test_search_criteria_request_body_formats_single_specified_battery_range_as_string(): void
+    {
+        $criteria = new CarSearchCriteria(
+            specifiedBatteryRange: new FilterOption(slug: '300', label: '300 km'),
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('300', $body['SpecifiedBatteryRange']);
+    }
+
+    public function test_search_criteria_request_body_supports_multi_select_filter_options_for_bicycle(): void
+    {
+        $criteria = new BicycleSearchCriteria(
+            frameMaterials: [
+                new FilterOption(slug: 'aluminium', label: 'Aluminium'),
+                new FilterOption(slug: 'carbon', label: 'Carbon'),
+            ],
+            brakeTypes: [
+                new FilterOption(slug: 'schijfrem', label: 'Schijfrem'),
+                new FilterOption(slug: 'velgrem', label: 'Velgrem'),
+            ],
+            engineBrands: [
+                new FilterOption(slug: 'bosch', label: 'Bosch'),
+                new FilterOption(slug: 'shimano', label: 'Shimano'),
+            ],
+            specifiedBatteryRanges: [
+                new FilterOption(slug: '80-100', label: '80-100 km'),
+                new FilterOption(slug: '100-120', label: '100-120 km'),
+            ],
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['aluminium', 'carbon'], $body['FrameMaterial']);
+        $this->assertSame(['schijfrem', 'velgrem'], $body['BrakeType']);
+        $this->assertSame(['bosch', 'shimano'], $body['EngineBrand']);
+        $this->assertSame(['80-100', '100-120'], $body['SpecifiedBatteryRange']);
+    }
+
+    public function test_search_criteria_request_body_supports_multi_select_filter_options_for_camper(): void
+    {
+        $criteria = new CamperSearchCriteria(
+            bedLayouts: [
+                new FilterOption(slug: 'dwarsbed', label: 'Dwarsbed'),
+                new FilterOption(slug: 'frans-bed', label: 'Frans bed'),
+            ],
+            seatingLayouts: [
+                new FilterOption(slug: 'halfrond', label: 'Halfrond'),
+                new FilterOption(slug: 'treinzit', label: 'Treinzit'),
+            ],
+            sanitaryLayouts: [
+                new FilterOption(slug: 'douche', label: 'Douche'),
+                new FilterOption(slug: 'toilet', label: 'Toilet'),
+            ],
+            kitchenLayouts: [
+                new FilterOption(slug: 'l-vormig', label: 'L-vormig'),
+                new FilterOption(slug: 'hoek', label: 'Hoek'),
+            ],
+            camperChassisBrands: [
+                new FilterOption(slug: 'fiat', label: 'Fiat'),
+                new FilterOption(slug: 'mercedes', label: 'Mercedes'),
+            ],
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['dwarsbed', 'frans-bed'], $body['BedLayout']);
+        $this->assertSame(['halfrond', 'treinzit'], $body['SeatingLayout']);
+        $this->assertSame(['douche', 'toilet'], $body['SanitaryLayout']);
+        $this->assertSame(['l-vormig', 'hoek'], $body['KitchenLayout']);
+        $this->assertSame(['fiat', 'mercedes'], $body['CamperChassisBrand']);
+    }
+
+    public function test_search_criteria_request_body_car_mobility_type(): void
+    {
+        $criteria = new CarSearchCriteria;
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('auto', $body['MobilityType']);
+    }
+
+    public function test_search_criteria_request_body_bicycle_mobility_type(): void
+    {
+        $criteria = new BicycleSearchCriteria;
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('fiets', $body['MobilityType']);
+    }
+
     // --- Error Handling ---
 
     public function test_throws_on_invalid_json_response(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], 'not valid json'),
         ]);
 
@@ -689,23 +931,6 @@ class ViaBOVAGTest extends TestCase
 
         $this->expectException(ViaBOVAGException::class);
         $this->expectExceptionMessage('Failed to decode JSON');
-
-        $client->search(new MotorcycleSearchCriteria);
-    }
-
-    public function test_throws_on_missing_search_results(): void
-    {
-        $homepageHtml = $this->fixture('homepage.html');
-
-        $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], '{"pageProps":{}}'),
-        ]);
-
-        $client = $this->createClient($mock);
-
-        $this->expectException(ViaBOVAGException::class);
-        $this->expectExceptionMessage('missing serverSearchResults');
 
         $client->search(new MotorcycleSearchCriteria);
     }
@@ -729,10 +954,7 @@ class ViaBOVAGTest extends TestCase
 
     public function test_throws_on_unexpected_status_code(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(500, [], 'Internal Server Error'),
         ]);
 
@@ -758,6 +980,14 @@ class ViaBOVAGTest extends TestCase
             public function toFilterSlugs(): array
             {
                 return [];
+            }
+
+            /**
+             * @return array<string, mixed>
+             */
+            public function toRequestBody(): array
+            {
+                return ['MobilityType' => 'auto'];
             }
 
             public function page(): int
@@ -797,11 +1027,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_parses_listing_price_excludes_vat(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -810,26 +1038,6 @@ class ViaBOVAGTest extends TestCase
 
         // The fixture has priceExcludesVat = false on all listings
         $this->assertFalse($result->listings[0]->priceExcludesVat);
-    }
-
-    // --- Search Facets ---
-
-    public function test_parses_search_facets(): void
-    {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
-
-        $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
-        ]);
-
-        $client = $this->createClient($mock);
-        $result = $client->search(new MotorcycleSearchCriteria);
-
-        $this->assertNotEmpty($result->facets);
-        $this->assertNotEmpty($result->facets[0]->name);
-        $this->assertNotEmpty($result->facets[0]->label);
     }
 
     // --- Detail: New ListingDetail fields ---
@@ -1007,22 +1215,19 @@ class ViaBOVAGTest extends TestCase
         $this->assertIsBool($firstSpec->hasValue);
     }
 
-    // --- Transient Error Retry ---
+    // --- Transient Error Retry (REST API) ---
 
     public function test_retries_on_429_response(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             // First attempt: 429 Too Many Requests
             new Response(429, [], ''),
             // Retry: succeeds
             new Response(200, [], $searchJson),
         ]);
 
-        // maxRetries: 1, no sleep overhead in tests
         $client = $this->createClientWithRetries($mock, maxRetries: 1);
         $result = $client->search(new MotorcycleSearchCriteria);
 
@@ -1031,11 +1236,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_retries_on_503_response(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             // First attempt: 503 Service Unavailable
             new Response(503, [], ''),
             // Retry: succeeds
@@ -1050,10 +1253,7 @@ class ViaBOVAGTest extends TestCase
 
     public function test_throws_after_exhausting_transient_retries(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(429, [], ''),
             new Response(429, [], ''),
         ]);
@@ -1069,10 +1269,7 @@ class ViaBOVAGTest extends TestCase
 
     public function test_does_not_retry_non_transient_errors(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             // 500 is not in the retryable list
             new Response(500, [], 'Internal Server Error'),
         ]);
@@ -1089,12 +1286,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_search_all_yields_listings_from_single_page(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        // The search fixture has 24 listings and count > 24, so let's build a small one
         $searchJson = $this->buildSearchJson(listingCount: 3, totalCount: 3);
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1106,12 +1300,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_search_all_iterates_multiple_pages(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
         $page1Json = $this->buildSearchJson(listingCount: 24, totalCount: 30);
         $page2Json = $this->buildSearchJson(listingCount: 6, totalCount: 30);
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $page1Json),
             new Response(200, [], $page2Json),
         ]);
@@ -1124,11 +1316,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_search_all_yields_nothing_for_empty_results(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
         $searchJson = $this->buildSearchJson(listingCount: 0, totalCount: 0);
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1140,11 +1330,9 @@ class ViaBOVAGTest extends TestCase
 
     public function test_search_all_propagates_error_on_second_page(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
         $page1Json = $this->buildSearchJson(listingCount: 24, totalCount: 48);
 
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $page1Json),
             // Second page returns 500
             new Response(500, [], 'Internal Server Error'),
@@ -1171,13 +1359,10 @@ class ViaBOVAGTest extends TestCase
 
     public function test_search_all_propagates_network_error(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new ConnectException(
                 'Connection timed out',
-                new Request('GET', 'https://www.viabovag.nl/test'),
+                new Request('POST', 'https://www.viabovag.nl/api/client/search/results'),
             ),
         ]);
 
@@ -1190,61 +1375,38 @@ class ViaBOVAGTest extends TestCase
         iterator_to_array($client->searchAll(new MotorcycleSearchCriteria));
     }
 
-    // --- URL Construction (via request history) ---
+    // --- REST API Request Construction ---
 
-    public function test_search_url_contains_correct_mobility_type_for_motorcycle(): void
+    public function test_search_posts_to_rest_api_endpoint(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
         $client = $this->createClientWithHistory($mock, $history);
         $client->search(new MotorcycleSearchCriteria);
 
-        // history[0] = homepage, history[1] = search request
-        $this->assertCount(2, $history);
+        $this->assertCount(1, $history);
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = $searchRequest->getUri()->getQuery();
+        $searchRequest = $history[0]['request'];
 
-        $this->assertStringContainsString('mobilityType=motoren', $query);
+        $this->assertSame('POST', $searchRequest->getMethod());
+        $this->assertSame('/api/client/search/results', $searchRequest->getUri()->getPath());
+        $this->assertSame('application/json', $searchRequest->getHeaderLine('Content-Type'));
+        $this->assertSame('application/json', $searchRequest->getHeaderLine('Accept'));
+        $this->assertSame('https://www.viabovag.nl', $searchRequest->getHeaderLine('Origin'));
     }
 
-    public function test_search_url_contains_correct_mobility_type_for_car(): void
+    public function test_search_request_body_contains_mobility_type(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->buildSearchJson(listingCount: 1, totalCount: 1);
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
-        ]);
-
-        $client = $this->createClientWithHistory($mock, $history);
-        $client->search(new CarSearchCriteria);
-
-        /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = $searchRequest->getUri()->getQuery();
-
-        $this->assertStringContainsString('mobilityType=auto', $query);
-    }
-
-    public function test_search_url_contains_build_id(): void
-    {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
-
-        $history = [];
-        $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1252,22 +1414,19 @@ class ViaBOVAGTest extends TestCase
         $client->search(new MotorcycleSearchCriteria);
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $path = $searchRequest->getUri()->getPath();
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
 
-        // The build ID from homepage.html fixture is PQS_ur-FpJe0R6JUyWiD2
-        $this->assertStringContainsString('/_next/data/PQS_ur-FpJe0R6JUyWiD2/', $path);
-        $this->assertStringEndsWith('/nl-NL/srp.json', $path);
+        $this->assertSame('motor', $body['MobilityType']);
+        $this->assertTrue($body['InStock']);
     }
 
-    public function test_search_url_contains_filter_slugs(): void
+    public function test_search_request_body_contains_filters(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1279,23 +1438,20 @@ class ViaBOVAGTest extends TestCase
         ));
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = urldecode($searchRequest->getUri()->getQuery());
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
 
-        $this->assertStringContainsString('selectedFilters=', $query);
-        $this->assertStringContainsString('merk-honda', $query);
-        $this->assertStringContainsString('prijs-vanaf-3000', $query);
-        $this->assertStringContainsString('prijs-tot-en-met-10000', $query);
+        $this->assertSame(['honda'], $body['Brand']);
+        $this->assertSame(3000, $body['PriceFrom']);
+        $this->assertSame(10000, $body['PriceTo']);
     }
 
-    public function test_search_url_omits_selected_filters_when_no_filters(): void
+    public function test_search_request_body_omits_optional_filters_when_empty(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1303,20 +1459,21 @@ class ViaBOVAGTest extends TestCase
         $client->search(new MotorcycleSearchCriteria);
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = $searchRequest->getUri()->getQuery();
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
 
-        $this->assertStringNotContainsString('selectedFilters', $query);
+        $this->assertArrayNotHasKey('Brand', $body);
+        $this->assertArrayNotHasKey('PriceFrom', $body);
+        $this->assertArrayNotHasKey('SortOrder', $body);
+        $this->assertArrayNotHasKey('PageNumber', $body);
     }
 
-    public function test_search_url_contains_sort_order_slug(): void
+    public function test_search_request_body_contains_sort_order(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1326,21 +1483,18 @@ class ViaBOVAGTest extends TestCase
         ));
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = urldecode($searchRequest->getUri()->getQuery());
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
 
-        $this->assertStringContainsString('selectedFilters=', $query);
-        $this->assertStringContainsString('sortering-prijsoplopend', $query);
+        $this->assertSame('prijsOplopend', $body['SortOrder']);
     }
 
-    public function test_search_url_includes_page_parameter_for_page_2(): void
+    public function test_search_request_body_includes_page_number_for_page_2(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1348,20 +1502,18 @@ class ViaBOVAGTest extends TestCase
         $client->search(new MotorcycleSearchCriteria(page: 3));
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = $searchRequest->getUri()->getQuery();
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
 
-        $this->assertStringContainsString('selectedFilters=pagina-3', $query);
+        $this->assertSame(3, $body['PageNumber']);
     }
 
-    public function test_search_url_omits_page_parameter_for_page_1(): void
+    public function test_search_request_body_omits_page_number_for_page_1(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $searchJson = $this->fixture('search-results-api.json');
 
         $history = [];
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new Response(200, [], $searchJson),
         ]);
 
@@ -1369,11 +1521,32 @@ class ViaBOVAGTest extends TestCase
         $client->search(new MotorcycleSearchCriteria(page: 1));
 
         /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
-        $query = $searchRequest->getUri()->getQuery();
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
 
-        $this->assertStringNotContainsString('pagina-', $query);
+        $this->assertArrayNotHasKey('PageNumber', $body);
     }
+
+    public function test_search_request_for_car_uses_auto_mobility_type(): void
+    {
+        $searchJson = $this->buildSearchJson(listingCount: 1, totalCount: 1, mobilityType: 'auto');
+
+        $history = [];
+        $mock = new MockHandler([
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClientWithHistory($mock, $history);
+        $client->search(new CarSearchCriteria);
+
+        /** @var Request $searchRequest */
+        $searchRequest = $history[0]['request'];
+        $body = json_decode((string) $searchRequest->getBody(), true);
+
+        $this->assertSame('auto', $body['MobilityType']);
+    }
+
+    // --- Detail URL Construction (still uses _next/data) ---
 
     public function test_detail_url_contains_correct_mobility_type_and_slug(): void
     {
@@ -1394,6 +1567,7 @@ class ViaBOVAGTest extends TestCase
         $query = urldecode($detailRequest->getUri()->getQuery());
         $path = $detailRequest->getUri()->getPath();
 
+        $this->assertSame('GET', $detailRequest->getMethod());
         $this->assertStringEndsWith('/nl-NL/vdp.json', $path);
         $this->assertStringContainsString('mobilityType=motor', $query);
         $this->assertStringContainsString('vehicleUrl=harley-davidson-test-slug', $query);
@@ -1421,37 +1595,56 @@ class ViaBOVAGTest extends TestCase
         $this->assertStringContainsString('vehicleUrl=volkswagen-golf-test', $query);
     }
 
-    public function test_search_request_includes_nextjs_data_header(): void
+    public function test_detail_url_contains_build_id(): void
     {
         $homepageHtml = $this->fixture('homepage.html');
-        $searchJson = $this->fixture('search-results.json');
+        $detailJson = $this->fixture('listing-detail.json');
 
         $history = [];
         $mock = new MockHandler([
             new Response(200, [], $homepageHtml),
-            new Response(200, [], $searchJson),
+            new Response(200, [], $detailJson),
         ]);
 
         $client = $this->createClientWithHistory($mock, $history);
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
 
-        /** @var Request $searchRequest */
-        $searchRequest = $history[1]['request'];
+        /** @var Request $detailRequest */
+        $detailRequest = $history[1]['request'];
+        $path = $detailRequest->getUri()->getPath();
 
-        $this->assertSame('1', $searchRequest->getHeaderLine('x-nextjs-data'));
+        // The build ID from homepage.html fixture is PQS_ur-FpJe0R6JUyWiD2
+        $this->assertStringContainsString('/_next/data/PQS_ur-FpJe0R6JUyWiD2/', $path);
+    }
+
+    public function test_detail_request_includes_nextjs_data_header(): void
+    {
+        $homepageHtml = $this->fixture('homepage.html');
+        $detailJson = $this->fixture('listing-detail.json');
+
+        $history = [];
+        $mock = new MockHandler([
+            new Response(200, [], $homepageHtml),
+            new Response(200, [], $detailJson),
+        ]);
+
+        $client = $this->createClientWithHistory($mock, $history);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
+
+        /** @var Request $detailRequest */
+        $detailRequest = $history[1]['request'];
+
+        $this->assertSame('1', $detailRequest->getHeaderLine('x-nextjs-data'));
     }
 
     // --- HTTP Network Error Handling ---
 
     public function test_throws_on_connection_exception_during_search(): void
     {
-        $homepageHtml = $this->fixture('homepage.html');
-
         $mock = new MockHandler([
-            new Response(200, [], $homepageHtml),
             new ConnectException(
                 'Connection timed out',
-                new Request('GET', 'https://www.viabovag.nl/_next/data/test/nl-NL/srp.json'),
+                new Request('POST', 'https://www.viabovag.nl/api/client/search/results'),
             ),
         ]);
 
@@ -1477,7 +1670,7 @@ class ViaBOVAGTest extends TestCase
         $this->expectException(ViaBOVAGException::class);
         $this->expectExceptionMessage('Failed to fetch homepage for build ID');
 
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
     }
 
     public function test_throws_on_non_200_homepage_response(): void
@@ -1491,7 +1684,7 @@ class ViaBOVAGTest extends TestCase
         $this->expectException(ViaBOVAGException::class);
         $this->expectExceptionMessage('Failed to fetch homepage: HTTP 503');
 
-        $client->search(new MotorcycleSearchCriteria);
+        $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
     }
 
     public function test_throws_on_connection_exception_during_detail_fetch(): void
@@ -1514,24 +1707,321 @@ class ViaBOVAGTest extends TestCase
         $client->getDetailBySlug('test-slug', MobilityType::Motorcycle);
     }
 
+    // --- Facets REST API Request Construction ---
+
+    public function test_facets_posts_to_rest_api_endpoint(): void
+    {
+        $facetsJson = $this->fixture('search-facets-api.json');
+
+        $history = [];
+        $mock = new MockHandler([
+            new Response(200, [], $facetsJson),
+        ]);
+
+        $client = $this->createClientWithHistory($mock, $history);
+        $client->getBrands(MobilityType::Motorcycle);
+
+        $this->assertCount(1, $history);
+
+        /** @var Request $facetsRequest */
+        $facetsRequest = $history[0]['request'];
+
+        $this->assertSame('POST', $facetsRequest->getMethod());
+        $this->assertSame('/api/client/search/facets', $facetsRequest->getUri()->getPath());
+        $this->assertSame('application/json', $facetsRequest->getHeaderLine('Content-Type'));
+    }
+
+    // --- Search REST API Client-Side Fallbacks ---
+
+    public function test_search_applies_financeable_fallback_filter_when_requested(): void
+    {
+        $searchJson = $this->buildSearchJsonFromListings([
+            [
+                'id' => 'financeable-yes',
+                'isFinanceable' => true,
+            ],
+            [
+                'id' => 'financeable-no',
+                'isFinanceable' => false,
+            ],
+        ]);
+
+        $mock = new MockHandler([
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new MotorcycleSearchCriteria(isFinanceable: true));
+
+        $this->assertCount(1, $result->listings);
+        $this->assertSame('financeable-yes', $result->listings[0]->id);
+    }
+
+    public function test_search_applies_import_odometer_check_fallback_filter_when_requested(): void
+    {
+        $searchJson = $this->buildSearchJsonFromListings([
+            [
+                'id' => 'import-check-yes',
+                'vehicle' => [
+                    'certaintyKeys' => ['HasBovagImportOdometerCheck'],
+                ],
+            ],
+            [
+                'id' => 'import-check-no',
+                'vehicle' => [
+                    'certaintyKeys' => [],
+                ],
+            ],
+        ]);
+
+        $mock = new MockHandler([
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new MotorcycleSearchCriteria(hasBovagImportOdometerCheck: true));
+
+        $this->assertCount(1, $result->listings);
+        $this->assertSame('import-check-yes', $result->listings[0]->id);
+    }
+
+    public function test_search_applies_client_side_mileage_sort_when_requested(): void
+    {
+        $searchJson = $this->buildSearchJsonFromListings([
+            [
+                'id' => 'mileage-high',
+                'vehicle' => ['mileage' => 5000],
+            ],
+            [
+                'id' => 'mileage-medium',
+                'vehicle' => ['mileage' => 1500],
+            ],
+            [
+                'id' => 'mileage-low',
+                'vehicle' => ['mileage' => 0],
+            ],
+        ]);
+
+        $mock = new MockHandler([
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new MotorcycleSearchCriteria(sortOrder: SortOrder::MileageAscending));
+
+        $mileage = array_map(
+            fn (Listing $listing): int => $listing->vehicle->mileage,
+            $result->listings,
+        );
+
+        $this->assertSame([0, 1500, 5000], $mileage);
+    }
+
+    public function test_search_applies_client_side_city_multi_select_filtering(): void
+    {
+        $searchJson = $this->buildSearchJsonFromListings([
+            ['id' => 'city-amsterdam', 'company' => ['city' => 'Amsterdam']],
+            ['id' => 'city-utrecht', 'company' => ['city' => 'Utrecht']],
+            ['id' => 'city-rotterdam', 'company' => ['city' => 'Rotterdam']],
+        ], totalCount: 3);
+
+        $mock = new MockHandler([
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new CarSearchCriteria(cities: [
+            new FilterOption(slug: 'amsterdam', label: 'Amsterdam'),
+            new FilterOption(slug: 'utrecht', label: 'Utrecht'),
+        ]));
+
+        $this->assertCount(2, $result->listings);
+        $this->assertContains('city-amsterdam', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+        $this->assertContains('city-utrecht', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+    }
+
+    public function test_search_applies_has_nap_weblabel_fallback_filter_when_requested(): void
+    {
+        $searchJson = $this->buildSearchJsonFromListings([
+            ['id' => 'nap-yes', 'vehicle' => ['certaintyKeys' => ['HasNapWeblabel']]],
+            ['id' => 'nap-no', 'vehicle' => ['certaintyKeys' => []]],
+        ], totalCount: 2);
+
+        $mock = new MockHandler([
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new CarSearchCriteria(hasNapWeblabel: true));
+
+        $this->assertCount(1, $result->listings);
+        $this->assertSame('nap-yes', $result->listings[0]->id);
+    }
+
+    public function test_search_applies_client_side_specified_battery_range_multi_select_filtering(): void
+    {
+        $range300Json = $this->buildSearchJsonFromListings([
+            ['id' => 'range-300'],
+        ], totalCount: 1);
+
+        $range400Json = $this->buildSearchJsonFromListings([
+            ['id' => 'range-400'],
+        ], totalCount: 1);
+
+        $mock = new MockHandler([
+            new Response(200, [], $range300Json),
+            new Response(200, [], $range400Json),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new CarSearchCriteria(
+            specifiedBatteryRanges: [
+                new FilterOption(slug: '300', label: '300 km'),
+                new FilterOption(slug: '400', label: '400 km'),
+            ],
+        ));
+
+        $this->assertCount(2, $result->listings);
+        $this->assertContains('range-300', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+        $this->assertContains('range-400', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+    }
+
+    public function test_search_retries_with_sanitized_colors_when_api_rejects_color_filter(): void
+    {
+        $colorFacetsJson = json_encode([
+            'count' => 1,
+            'facets' => [
+                [
+                    'name' => 'Color',
+                    'label' => 'Kleur',
+                    'options' => [
+                        ['name' => 'Zwart', 'label' => 'Zwart', 'count' => 1],
+                    ],
+                    'optionCategories' => [],
+                ],
+            ],
+        ]);
+
+        $searchJson = $this->buildSearchJsonFromListings([
+            [
+                'id' => 'black-bike',
+                'vehicle' => ['color' => 'zwart'],
+            ],
+        ]);
+
+        $history = [];
+        $mock = new MockHandler([
+            new Response(500, [], ''),
+            new Response(200, [], $colorFacetsJson),
+            new Response(200, [], $searchJson),
+        ]);
+
+        $client = $this->createClientWithHistory($mock, $history);
+        $result = $client->search(new MotorcycleSearchCriteria(colors: ['Roze', 'Zwart']));
+
+        $this->assertCount(1, $result->listings);
+        $this->assertSame('black-bike', $result->listings[0]->id);
+
+        /** @var Request $retriedSearchRequest */
+        $retriedSearchRequest = $history[2]['request'];
+        $retriedBody = json_decode((string) $retriedSearchRequest->getBody(), true);
+
+        $this->assertSame(['Zwart'], $retriedBody['Color']);
+    }
+
+    public function test_search_returns_empty_when_all_requested_colors_are_invalid(): void
+    {
+        $colorFacetsJson = json_encode([
+            'count' => 1,
+            'facets' => [
+                [
+                    'name' => 'Color',
+                    'label' => 'Kleur',
+                    'options' => [
+                        ['name' => 'Zwart', 'label' => 'Zwart', 'count' => 1],
+                    ],
+                    'optionCategories' => [],
+                ],
+            ],
+        ]);
+
+        $history = [];
+        $mock = new MockHandler([
+            new Response(500, [], ''),
+            new Response(200, [], $colorFacetsJson),
+        ]);
+
+        $client = $this->createClientWithHistory($mock, $history);
+        $result = $client->search(new MotorcycleSearchCriteria(colors: ['Roze']));
+
+        $this->assertSame([], $result->listings);
+        $this->assertSame(0, $result->totalCount);
+        $this->assertCount(2, $history);
+    }
+
+    public function test_search_applies_not_imported_fallback_filter_when_requested(): void
+    {
+        $allListingsJson = $this->buildSearchJsonFromListings([
+            ['id' => 'import-no'],
+            ['id' => 'import-yes'],
+        ], totalCount: 2);
+
+        $importedOnlyJson = $this->buildSearchJsonFromListings([
+            ['id' => 'import-yes'],
+        ], totalCount: 1);
+
+        $mock = new MockHandler([
+            new Response(200, [], $allListingsJson),
+            new Response(200, [], $importedOnlyJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new MotorcycleSearchCriteria(isImported: false));
+
+        $this->assertCount(1, $result->listings);
+        $this->assertSame('import-no', $result->listings[0]->id);
+        $this->assertSame(1, $result->totalCount);
+    }
+
+    public function test_search_applies_client_side_mileage_range_filtering_when_requested(): void
+    {
+        $withoutMileageFilterJson = $this->buildSearchJsonFromListings([
+            ['id' => 'mileage-1500', 'vehicle' => ['mileage' => 1500]],
+            ['id' => 'mileage-0', 'vehicle' => ['mileage' => 0]],
+            ['id' => 'mileage-9999', 'vehicle' => ['mileage' => 9999]],
+        ], totalCount: 3);
+
+        $mock = new MockHandler([
+            new Response(200, [], $withoutMileageFilterJson),
+        ]);
+
+        $client = $this->createClient($mock);
+        $result = $client->search(new MotorcycleSearchCriteria(mileageTo: 2000));
+
+        $this->assertCount(2, $result->listings);
+        $this->assertContains('mileage-1500', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+        $this->assertContains('mileage-0', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+        $this->assertNotContains('mileage-9999', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+    }
+
     /**
-     * Build a minimal search JSON response with a specified number of listings.
+     * Build a minimal search JSON response in REST API format.
      */
-    private function buildSearchJson(int $listingCount, int $totalCount): string
+    private function buildSearchJson(int $listingCount, int $totalCount, string $mobilityType = 'motor'): string
     {
         $listings = [];
         for ($i = 0; $i < $listingCount; $i++) {
             $listings[] = [
                 'id' => 'listing-'.$i.'-'.uniqid(),
-                'mobilityType' => 'motor',
-                'url' => '/motoren/test-'.$i,
+                'mobilityType' => $mobilityType,
+                'url' => '/'.$mobilityType.'en/test-'.$i,
                 'friendlyUriPart' => 'test-'.$i,
                 'title' => 'Test Listing '.$i,
                 'price' => 5000 + ($i * 100),
                 'isFinanceable' => false,
                 'priceExcludesVat' => false,
                 'vehicle' => [
-                    'type' => 'motor',
+                    'type' => $mobilityType,
                     'brand' => 'Test',
                     'model' => 'Model '.$i,
                     'mileage' => 10000,
@@ -1552,53 +2042,64 @@ class ViaBOVAGTest extends TestCase
         }
 
         return json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => $listings,
-                    'count' => $totalCount,
-                ],
-            ],
+            'results' => $listings,
+            'count' => $totalCount,
         ]);
     }
 
-    private function buildSearchJsonWithMobilityType(string $mobilityType): string
+    /**
+     * Build REST API search JSON from per-listing overrides.
+     *
+     * @param  array<int, array<string, mixed>>  $listingOverrides
+     */
+    private function buildSearchJsonFromListings(array $listingOverrides, ?int $totalCount = null): string
     {
-        return json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [
-                        [
-                            'id' => 'listing-1',
-                            'mobilityType' => $mobilityType,
-                            'url' => '/test',
-                            'friendlyUriPart' => 'test',
-                            'title' => 'Test Listing',
-                            'price' => 5000,
-                            'isFinanceable' => false,
-                            'priceExcludesVat' => false,
-                            'vehicle' => [
-                                'type' => $mobilityType,
-                                'brand' => 'Test',
-                                'model' => 'Model',
-                                'mileage' => 10000,
-                                'mileageUnit' => 'kilometer',
-                                'year' => 2020,
-                                'fuelTypes' => ['Benzine'],
-                                'warranties' => [],
-                                'certaintyKeys' => [],
-                                'fullyServiced' => false,
-                                'hasBovagChecklist' => false,
-                                'hasReturnWarranty' => false,
-                                'servicedOnDelivery' => false,
-                            ],
-                            'company' => [
-                                'name' => 'Test Dealer',
-                            ],
-                        ],
-                    ],
-                    'count' => 1,
-                ],
+        $baseListing = [
+            'id' => 'listing-default',
+            'mobilityType' => 'motor',
+            'url' => '/motoren/test',
+            'friendlyUriPart' => 'test',
+            'title' => 'Test Listing',
+            'price' => 5000,
+            'isFinanceable' => false,
+            'priceExcludesVat' => false,
+            'vehicle' => [
+                'type' => 'motor',
+                'brand' => 'Test',
+                'model' => 'Model',
+                'mileage' => 10000,
+                'mileageUnit' => 'kilometer',
+                'year' => 2020,
+                'fuelTypes' => ['Benzine'],
+                'warranties' => [],
+                'certaintyKeys' => [],
+                'fullyServiced' => false,
+                'hasBovagChecklist' => false,
+                'hasReturnWarranty' => false,
+                'servicedOnDelivery' => false,
             ],
+            'company' => [
+                'name' => 'Test Dealer',
+            ],
+        ];
+
+        $listings = array_map(function (array $overrides) use ($baseListing): array {
+            $listing = array_merge($baseListing, $overrides);
+
+            if (isset($overrides['vehicle']) && is_array($overrides['vehicle'])) {
+                $listing['vehicle'] = array_merge($baseListing['vehicle'], $overrides['vehicle']);
+            }
+
+            if (isset($overrides['company']) && is_array($overrides['company'])) {
+                $listing['company'] = array_merge($baseListing['company'], $overrides['company']);
+            }
+
+            return $listing;
+        }, $listingOverrides);
+
+        return json_encode([
+            'results' => $listings,
+            'count' => $totalCount ?? count($listings),
         ]);
     }
 }

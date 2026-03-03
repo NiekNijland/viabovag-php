@@ -18,4 +18,17 @@ enum CylinderCount: int
     {
         return 'cilinders-'.$this->value;
     }
+
+    public function requestValue(): string
+    {
+        return match ($this) {
+            self::Two => 'Two',
+            self::Three => 'Three',
+            self::Four => 'Four',
+            self::Five => 'Five',
+            self::Six => 'Six',
+            self::Eight => 'Eight',
+            self::Ten => 'TenOrMore',
+        };
+    }
 }

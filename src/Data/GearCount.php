@@ -16,4 +16,14 @@ enum GearCount: int
     {
         return 'versnellingen-'.$this->value;
     }
+
+    public function requestValue(): string
+    {
+        return match ($this) {
+            self::Five => 'OneToFive',
+            self::Six => 'Six',
+            self::Seven => 'Seven',
+            self::Eight, self::Nine => 'EightOrMore',
+        };
+    }
 }

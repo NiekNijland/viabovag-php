@@ -16,6 +16,13 @@ interface SearchQuery
     public function toFilterSlugs(): array;
 
     /**
+     * Build the JSON request body for the REST API search endpoints.
+     *
+     * @return array<string, mixed>
+     */
+    public function toRequestBody(): array;
+
+    /**
      * Current 1-based page number.
      */
     public function page(): int;

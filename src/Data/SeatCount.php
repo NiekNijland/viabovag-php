@@ -20,4 +20,9 @@ enum SeatCount: int
     {
         return 'zitplaatsen-'.$this->value;
     }
+
+    public function requestValue(): string
+    {
+        return $this->name;
+    }
 }

@@ -17,4 +17,9 @@ enum AvailableSince: string
     {
         return 'aangeboden-sinds-'.$this->value;
     }
+
+    public function requestValue(): string
+    {
+        return $this->name;
+    }
 }

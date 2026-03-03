@@ -174,6 +174,21 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('bovag12maanden', $slugs);
     }
 
+    public function test_shared_filter_slugs_support_multi_select_condition_and_warranty(): void
+    {
+        $criteria = new CarSearchCriteria(
+            conditions: [Condition::New, Condition::Used],
+            warranties: [BovagWarranty::TwelveMonths, BovagWarranty::Manufacturer],
+        );
+
+        $slugs = $criteria->toFilterSlugs();
+
+        $this->assertContains('nieuw', $slugs);
+        $this->assertContains('occasion', $slugs);
+        $this->assertContains('bovag12maanden', $slugs);
+        $this->assertContains('fabrieksgarantie', $slugs);
+    }
+
     public function test_shared_filter_slugs_keywords(): void
     {
         $criteria = new MotorcycleSearchCriteria(keywords: 'Sportbike');
@@ -381,6 +396,33 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('stad-amsterdam', $slugs);
     }
 
+    public function test_car_criteria_support_multi_select_city_and_ev_filter_options(): void
+    {
+        $criteria = new CarSearchCriteria(
+            cities: [
+                new FilterOption(slug: 'amsterdam', label: 'Amsterdam'),
+                new FilterOption(slug: 'utrecht', label: 'Utrecht'),
+            ],
+            energyLabels: [
+                new FilterOption(slug: 'a', label: 'A'),
+                new FilterOption(slug: 'b', label: 'B'),
+            ],
+            specifiedBatteryRanges: [
+                new FilterOption(slug: '300-400', label: '300-400 km'),
+                new FilterOption(slug: '400-500', label: '400-500 km'),
+            ],
+        );
+
+        $slugs = $criteria->toFilterSlugs();
+
+        $this->assertContains('stad-amsterdam', $slugs);
+        $this->assertContains('stad-utrecht', $slugs);
+        $this->assertContains('energielabel-a', $slugs);
+        $this->assertContains('energielabel-b', $slugs);
+        $this->assertContains('opgegeven-bereik-300-400', $slugs);
+        $this->assertContains('opgegeven-bereik-400-500', $slugs);
+    }
+
     public function test_car_criteria_empty_returns_no_slugs(): void
     {
         $criteria = new CarSearchCriteria;
@@ -406,6 +448,27 @@ class SearchCriteriaTest extends TestCase
         $slugs = $criteria->toFilterSlugs();
 
         $this->assertContains('frametype-dubbel-wieg', $slugs);
+    }
+
+    public function test_motorcycle_criteria_support_multi_select_transmission_license_and_frame_type(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            transmissions: [TransmissionType::Manual, TransmissionType::Automatic],
+            driversLicenses: [DriversLicense::A, DriversLicense::A2],
+            frameTypes: [
+                new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
+                new FilterOption(slug: 'trellis', label: 'Trellis'),
+            ],
+        );
+
+        $slugs = $criteria->toFilterSlugs();
+
+        $this->assertContains('handgeschakeld', $slugs);
+        $this->assertContains('automatisch', $slugs);
+        $this->assertContains('rijbewijs-a', $slugs);
+        $this->assertContains('rijbewijs-a2', $slugs);
+        $this->assertContains('frametype-dubbel-wieg', $slugs);
+        $this->assertContains('frametype-trellis', $slugs);
     }
 
     public function test_motorcycle_criteria_body_types(): void
@@ -491,6 +554,39 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('opgegeven-bereik-80-100', $slugs);
     }
 
+    public function test_bicycle_criteria_support_multi_select_filter_options(): void
+    {
+        $criteria = new BicycleSearchCriteria(
+            frameMaterials: [
+                new FilterOption(slug: 'aluminium', label: 'Aluminium'),
+                new FilterOption(slug: 'carbon', label: 'Carbon'),
+            ],
+            brakeTypes: [
+                new FilterOption(slug: 'schijfrem', label: 'Schijfrem'),
+                new FilterOption(slug: 'velgrem', label: 'Velgrem'),
+            ],
+            engineBrands: [
+                new FilterOption(slug: 'bosch', label: 'Bosch'),
+                new FilterOption(slug: 'shimano', label: 'Shimano'),
+            ],
+            specifiedBatteryRanges: [
+                new FilterOption(slug: '80-100', label: '80-100 km'),
+                new FilterOption(slug: '100-120', label: '100-120 km'),
+            ],
+        );
+
+        $slugs = $criteria->toFilterSlugs();
+
+        $this->assertContains('framemateriaal-aluminium', $slugs);
+        $this->assertContains('framemateriaal-carbon', $slugs);
+        $this->assertContains('remtype-schijfrem', $slugs);
+        $this->assertContains('remtype-velgrem', $slugs);
+        $this->assertContains('motormerk-bosch', $slugs);
+        $this->assertContains('motormerk-shimano', $slugs);
+        $this->assertContains('opgegeven-bereik-80-100', $slugs);
+        $this->assertContains('opgegeven-bereik-100-120', $slugs);
+    }
+
     public function test_bicycle_criteria_empty_returns_no_slugs(): void
     {
         $criteria = new BicycleSearchCriteria;
@@ -522,6 +618,45 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('stahoogte-vanaf-190', $slugs);
         $this->assertContains('chassis-merk-fiat', $slugs);
         $this->assertContains('maximale-massa-tot-en-met-3500', $slugs);
+    }
+
+    public function test_camper_criteria_support_multi_select_layout_filter_options(): void
+    {
+        $criteria = new CamperSearchCriteria(
+            bedLayouts: [
+                new FilterOption(slug: 'dwarsbed', label: 'Dwarsbed'),
+                new FilterOption(slug: 'frans-bed', label: 'Frans bed'),
+            ],
+            seatingLayouts: [
+                new FilterOption(slug: 'halfrond', label: 'Halfrond'),
+                new FilterOption(slug: 'treinzit', label: 'Treinzit'),
+            ],
+            sanitaryLayouts: [
+                new FilterOption(slug: 'douche', label: 'Douche'),
+                new FilterOption(slug: 'toilet', label: 'Toilet'),
+            ],
+            kitchenLayouts: [
+                new FilterOption(slug: 'l-vormig', label: 'L-vormig'),
+                new FilterOption(slug: 'hoek', label: 'Hoek'),
+            ],
+            camperChassisBrands: [
+                new FilterOption(slug: 'fiat', label: 'Fiat'),
+                new FilterOption(slug: 'mercedes', label: 'Mercedes'),
+            ],
+        );
+
+        $slugs = $criteria->toFilterSlugs();
+
+        $this->assertContains('bedindeling-dwarsbed', $slugs);
+        $this->assertContains('bedindeling-frans-bed', $slugs);
+        $this->assertContains('zitindeling-halfrond', $slugs);
+        $this->assertContains('zitindeling-treinzit', $slugs);
+        $this->assertContains('sanitaire-indeling-douche', $slugs);
+        $this->assertContains('sanitaire-indeling-toilet', $slugs);
+        $this->assertContains('keukenindeling-l-vormig', $slugs);
+        $this->assertContains('keukenindeling-hoek', $slugs);
+        $this->assertContains('chassis-merk-fiat', $slugs);
+        $this->assertContains('chassis-merk-mercedes', $slugs);
     }
 
     public function test_camper_criteria_engine_and_transmission(): void

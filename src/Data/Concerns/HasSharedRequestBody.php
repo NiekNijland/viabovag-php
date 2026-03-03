@@ -9,11 +9,12 @@ use NiekNijland\ViaBOVAG\Data\BovagWarranty;
 use NiekNijland\ViaBOVAG\Data\Brand;
 use NiekNijland\ViaBOVAG\Data\Condition;
 use NiekNijland\ViaBOVAG\Data\Distance;
+use NiekNijland\ViaBOVAG\Data\MobilityType;
 use NiekNijland\ViaBOVAG\Data\Model;
 use NiekNijland\ViaBOVAG\Data\SortOrder;
 
 /**
- * Shared filter slug generation for properties common across all mobility types.
+ * Shared request body generation for properties common across all mobility types.
  *
  * Expects the using class to define the following public properties:
  *
@@ -52,165 +53,200 @@ use NiekNijland\ViaBOVAG\Data\SortOrder;
  * @property ?AvailableSince $availableSince
  * @property ?SortOrder $sortOrder
  */
-trait HasSharedFilterSlugs
+trait HasSharedRequestBody
 {
     /**
-     * Normalize a free-text value into a URL-safe filter slug.
-     * Converts to lowercase and replaces whitespace with hyphens.
+     * Build the shared portion of the REST API request body.
+     *
+     * The using class must implement `mobilityType(): MobilityType` and `page(): int`.
+     *
+     * @return array<string, mixed>
      */
-    protected function slugify(string $value): string
+    protected function sharedRequestBody(): array
     {
-        return (string) preg_replace('/\s+/', '-', strtolower(trim($value)));
-    }
+        $body = [
+            'MobilityType' => $this->mobilityType()->value,
+            'InStock' => true,
+            'ShowCommercialVehicles' => true,
+            'HideVatExcludedPrices' => true,
+        ];
 
-    /**
-     * @return string[]
-     */
-    protected function sharedFilterSlugs(): array
-    {
-        $filters = [];
+        if ($this->page() > 1) {
+            $body['PageNumber'] = $this->page();
+        }
 
         if ($this->brand instanceof Brand) {
-            $filters[] = 'merk-'.$this->brand->slug;
+            $body['Brand'] = [$this->brand->slug];
         }
 
         if ($this->model instanceof Model) {
-            $filters[] = 'model-'.$this->model->slug;
+            $body['Model'] = $this->model->slug;
         }
 
         if ($this->modelKeywords !== null) {
-            $filters[] = 'model-trefwoorden-'.$this->slugify($this->modelKeywords);
-        }
+            $normalizedModelKeywords = trim($this->modelKeywords);
 
-        if ($this->priceFrom !== null) {
-            $filters[] = 'prijs-vanaf-'.$this->priceFrom;
-        }
+            if ($normalizedModelKeywords !== '') {
+                // The API tokenizes model keywords and does not handle slug-style dashes reliably.
+                if (! str_contains($normalizedModelKeywords, ' ')) {
+                    $normalizedModelKeywords = str_replace('-', ' ', $normalizedModelKeywords);
+                }
 
-        if ($this->priceTo !== null) {
-            $filters[] = 'prijs-tot-en-met-'.$this->priceTo;
-        }
-
-        if ($this->leasePriceFrom !== null) {
-            $filters[] = 'leaseprijs-vanaf-'.$this->leasePriceFrom;
-        }
-
-        if ($this->leasePriceTo !== null) {
-            $filters[] = 'leaseprijs-tot-en-met-'.$this->leasePriceTo;
-        }
-
-        if ($this->yearFrom !== null) {
-            $filters[] = 'bouwjaar-vanaf-'.$this->yearFrom;
-        }
-
-        if ($this->yearTo !== null) {
-            $filters[] = 'bouwjaar-tot-en-met-'.$this->yearTo;
-        }
-
-        if ($this->modelYearFrom !== null) {
-            $filters[] = 'modeljaar-vanaf-'.$this->modelYearFrom;
-        }
-
-        if ($this->modelYearTo !== null) {
-            $filters[] = 'modeljaar-tot-en-met-'.$this->modelYearTo;
-        }
-
-        if ($this->mileageFrom !== null) {
-            $filters[] = 'kilometerstand-vanaf-'.$this->mileageFrom;
-        }
-
-        if ($this->mileageTo !== null) {
-            $filters[] = 'kilometerstand-tot-en-met-'.$this->mileageTo;
-        }
-
-        if ($this->enginePowerFrom !== null) {
-            $filters[] = 'vermogen-pk-vanaf-'.$this->enginePowerFrom;
-        }
-
-        if ($this->enginePowerTo !== null) {
-            $filters[] = 'vermogen-pk-tot-en-met-'.$this->enginePowerTo;
-        }
-
-        if ($this->colors !== null) {
-            foreach ($this->colors as $color) {
-                $filters[] = 'kleur-'.$this->slugify((string) $color);
+                $body['ModelKeywords'] = $normalizedModelKeywords;
             }
         }
 
+        if ($this->priceFrom !== null) {
+            $body['PriceFrom'] = $this->priceFrom;
+        }
+
+        if ($this->priceTo !== null) {
+            $body['PriceTo'] = $this->priceTo;
+        }
+
+        if ($this->leasePriceFrom !== null) {
+            $body['LeasePriceFrom'] = $this->leasePriceFrom;
+        }
+
+        if ($this->leasePriceTo !== null) {
+            $body['LeasePriceTo'] = $this->leasePriceTo;
+        }
+
+        if ($this->yearFrom !== null) {
+            $body['YearFrom'] = $this->yearFrom;
+        }
+
+        if ($this->yearTo !== null) {
+            $body['YearTo'] = $this->yearTo;
+        }
+
+        if ($this->modelYearFrom !== null) {
+            $body['ModelYearFrom'] = $this->modelYearFrom;
+        }
+
+        if ($this->modelYearTo !== null) {
+            $body['ModelYearTo'] = $this->modelYearTo;
+        }
+
+        if ($this->mileageFrom !== null) {
+            $body['MileageFrom'] = $this->mileageFrom;
+        }
+
+        if ($this->mileageTo !== null) {
+            $body['MileageTo'] = $this->mileageTo;
+        }
+
+        if ($this->enginePowerFrom !== null) {
+            $body['EnginePowerFrom'] = $this->enginePowerFrom;
+        }
+
+        if ($this->enginePowerTo !== null) {
+            $body['EnginePowerTo'] = $this->enginePowerTo;
+        }
+
+        if ($this->colors !== null) {
+            $body['Color'] = $this->colors;
+        }
+
+        $conditions = [];
+
         if ($this->condition !== null) {
-            $filters[] = $this->condition->slug();
+            $conditions[] = $this->condition->value;
         }
 
         if (is_array($this->conditions)) {
             foreach ($this->conditions as $condition) {
-                $filters[] = $condition->slug();
+                $conditions[] = $condition->value;
             }
         }
 
-        if ($this->postalCode !== null) {
-            $filters[] = 'postcode-'.$this->postalCode;
+        $conditions = array_values(array_unique($conditions));
+
+        if ($conditions !== []) {
+            $body['Condition'] = $conditions;
         }
 
+        if ($this->postalCode !== null) {
+            $body['PostalCode'] = $this->postalCode;
+        }
+
+        if ($this->distance !== null) {
+            $body['Distance'] = $this->distance->value;
+        }
+
+        $warranties = [];
+
         if ($this->warranty !== null) {
-            $filters[] = $this->warranty->slug();
+            $warranties[] = $this->warranty->value;
         }
 
         if (is_array($this->warranties)) {
             foreach ($this->warranties as $warranty) {
-                $filters[] = $warranty->slug();
+                $warranties[] = $warranty->value;
             }
         }
 
+        $warranties = array_values(array_unique($warranties));
+
+        if ($warranties !== []) {
+            $body['Warranty'] = $warranties;
+        }
+
         if ($this->keywords !== null) {
-            $filters[] = 'trefwoorden-'.$this->slugify($this->keywords);
+            $body['Keywords'] = $this->keywords;
         }
 
         if ($this->availableSince !== null) {
-            $filters[] = $this->availableSince->slug();
+            $body['AvailableSince'] = $this->availableSince->requestValue();
         }
 
         // Boolean filters
         if ($this->fullyServiced === true) {
-            $filters[] = '100-procent-onderhouden';
-        }
-
-        if ($this->hasNapWeblabel === true) {
-            $filters[] = 'nap-weblabel';
+            $body['FullyServiced'] = true;
         }
 
         if ($this->hasBovagChecklist === true) {
-            $filters[] = '40-puntencheck';
+            $body['HasBovagChecklist'] = true;
         }
 
         if ($this->hasBovagMaintenanceFree === true) {
-            $filters[] = 'onderhoudsvrij';
+            $body['HasBovagMaintenanceFree'] = true;
         }
 
         if ($this->hasBovagImportOdometerCheck === true) {
-            $filters[] = 'import-teller-check';
+            $body['HasBovagImportOdometerCheck'] = true;
         }
 
         if ($this->servicedOnDelivery === true) {
-            $filters[] = 'afleverbeurt';
+            $body['CarServicedOnDelivery'] = true;
+        }
+
+        if ($this->hasNapWeblabel === true) {
+            if ($this->mobilityType() === MobilityType::Motorcycle) {
+                $body['HasNapOrBit'] = true;
+            } else {
+                $body['HasNapWeblabel'] = true;
+            }
         }
 
         if ($this->vatDeductible === true) {
-            $filters[] = 'btw-verrekenbaar';
+            $body['VatDeductible'] = true;
         }
 
         if ($this->isFinanceable === true) {
-            $filters[] = 'online-te-financieren';
+            $body['IsFinanceable'] = true;
         }
 
         if ($this->isImported === true) {
-            $filters[] = 'import-ja';
+            $body['Import'] = ['Ja'];
         } elseif ($this->isImported === false) {
-            $filters[] = 'import-nee';
+            $body['Import'] = ['Nee'];
         }
 
         if ($this->sortOrder !== null) {
-            $filters[] = $this->sortOrder->slug();
+            $body['SortOrder'] = $this->sortOrder->value;
         }
 
-        return $filters;
+        return $body;
     }
 }

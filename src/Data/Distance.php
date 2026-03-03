@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG\Data;
 
-enum Distance: string
+enum Distance: int
 {
-    case Five = 'Five';
-    case Ten = 'Ten';
-    case Twenty = 'Twenty';
-    case Thirty = 'Thirty';
-    case Forty = 'Forty';
-    case Fifty = 'Fifty';
-    case OneHundred = 'OneHundred';
-    case TwoHundred = 'TwoHundred';
-    case ThreeHundred = 'ThreeHundred';
+    case Five = 5;
+    case Ten = 10;
+    case Twenty = 20;
+    case Thirty = 30;
+    case Forty = 40;
+    case Fifty = 50;
+    case OneHundred = 100;
+    case TwoHundred = 200;
+    case ThreeHundred = 300;
 
     public function slug(): string
     {
-        return 'afstand-'.strtolower($this->value);
+        return 'afstand-'.$this->value;
     }
 }

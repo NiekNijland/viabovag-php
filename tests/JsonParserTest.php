@@ -83,23 +83,11 @@ class JsonParserTest extends TestCase
 
     // --- Search Results Parsing ---
 
-    public function test_throws_on_missing_server_search_results(): void
-    {
-        $this->expectException(ViaBOVAGException::class);
-        $this->expectExceptionMessage('missing serverSearchResults');
-
-        $this->parser->parseSearchResults('{"pageProps":{}}', 1);
-    }
-
     public function test_parses_empty_search_results(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [],
-                    'count' => 0,
-                ],
-            ],
+            'results' => [],
+            'count' => 0,
         ]);
 
         $result = $this->parser->parseSearchResults($json, 1);
@@ -115,12 +103,8 @@ class JsonParserTest extends TestCase
     public function test_parses_search_results_with_current_page(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [],
-                    'count' => 100,
-                ],
-            ],
+            'results' => [],
+            'count' => 100,
         ]);
 
         $result = $this->parser->parseSearchResults($json, 3);
@@ -133,12 +117,8 @@ class JsonParserTest extends TestCase
     public function test_parses_search_results_on_last_page(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [],
-                    'count' => 48,
-                ],
-            ],
+            'results' => [],
+            'count' => 48,
         ]);
 
         // 48 results / 24 per page = 2 pages, so page 2 is the last
@@ -152,23 +132,19 @@ class JsonParserTest extends TestCase
     public function test_parses_listing_with_unknown_mobility_type_throws(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [
-                        [
-                            'id' => 'test-id',
-                            'mobilityType' => 'spaceship',
-                            'url' => '/test',
-                            'friendlyUriPart' => 'test',
-                            'title' => 'Test',
-                            'price' => 1000,
-                            'vehicle' => ['brand' => 'Test', 'model' => 'X'],
-                            'company' => ['name' => 'Dealer'],
-                        ],
-                    ],
-                    'count' => 1,
+            'results' => [
+                [
+                    'id' => 'test-id',
+                    'mobilityType' => 'spaceship',
+                    'url' => '/test',
+                    'friendlyUriPart' => 'test',
+                    'title' => 'Test',
+                    'price' => 1000,
+                    'vehicle' => ['brand' => 'Test', 'model' => 'X'],
+                    'company' => ['name' => 'Dealer'],
                 ],
             ],
+            'count' => 1,
         ]);
 
         $this->expectException(ViaBOVAGException::class);
@@ -180,23 +156,19 @@ class JsonParserTest extends TestCase
     public function test_parses_car_listing_mobility_type_from_api_value(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [
-                        [
-                            'id' => 'test-id',
-                            'mobilityType' => 'auto',
-                            'url' => '/test',
-                            'friendlyUriPart' => 'test',
-                            'title' => 'Test',
-                            'price' => 1000,
-                            'vehicle' => ['brand' => 'Test', 'model' => 'X'],
-                            'company' => ['name' => 'Dealer'],
-                        ],
-                    ],
-                    'count' => 1,
+            'results' => [
+                [
+                    'id' => 'test-id',
+                    'mobilityType' => 'auto',
+                    'url' => '/test',
+                    'friendlyUriPart' => 'test',
+                    'title' => 'Test',
+                    'price' => 1000,
+                    'vehicle' => ['brand' => 'Test', 'model' => 'X'],
+                    'company' => ['name' => 'Dealer'],
                 ],
             ],
+            'count' => 1,
         ]);
 
         $result = $this->parser->parseSearchResults($json, 1);
@@ -207,23 +179,19 @@ class JsonParserTest extends TestCase
     public function test_parses_bicycle_listing_mobility_type_from_api_value(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [
-                        [
-                            'id' => 'test-id',
-                            'mobilityType' => 'fiets',
-                            'url' => '/test',
-                            'friendlyUriPart' => 'test',
-                            'title' => 'Test',
-                            'price' => 1000,
-                            'vehicle' => ['brand' => 'Test', 'model' => 'X'],
-                            'company' => ['name' => 'Dealer'],
-                        ],
-                    ],
-                    'count' => 1,
+            'results' => [
+                [
+                    'id' => 'test-id',
+                    'mobilityType' => 'fiets',
+                    'url' => '/test',
+                    'friendlyUriPart' => 'test',
+                    'title' => 'Test',
+                    'price' => 1000,
+                    'vehicle' => ['brand' => 'Test', 'model' => 'X'],
+                    'company' => ['name' => 'Dealer'],
                 ],
             ],
+            'count' => 1,
         ]);
 
         $result = $this->parser->parseSearchResults($json, 1);
@@ -234,33 +202,26 @@ class JsonParserTest extends TestCase
     public function test_parses_search_facets_with_options_and_categories(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [],
-                    'count' => 0,
-                ],
-                'serverSearchFacets' => [
-                    'facets' => [
+            'count' => 42,
+            'facets' => [
+                [
+                    'name' => 'brand',
+                    'label' => 'Merk',
+                    'disabled' => false,
+                    'selected' => true,
+                    'hidden' => false,
+                    'hasIcons' => true,
+                    'tooltip' => 'Select a brand',
+                    'selectedValues' => ['yamaha'],
+                    'options' => [
+                        ['name' => 'yamaha', 'label' => 'Yamaha', 'count' => 42, 'selected' => true],
+                        ['name' => 'honda', 'label' => 'Honda', 'count' => 30, 'selected' => false],
+                    ],
+                    'optionCategories' => [
                         [
-                            'name' => 'brand',
-                            'label' => 'Merk',
-                            'disabled' => false,
-                            'selected' => true,
-                            'hidden' => false,
-                            'hasIcons' => true,
-                            'tooltip' => 'Select a brand',
-                            'selectedValues' => ['yamaha'],
+                            'label' => 'Popular',
                             'options' => [
                                 ['name' => 'yamaha', 'label' => 'Yamaha', 'count' => 42, 'selected' => true],
-                                ['name' => 'honda', 'label' => 'Honda', 'count' => 30, 'selected' => false],
-                            ],
-                            'optionCategories' => [
-                                [
-                                    'label' => 'Popular',
-                                    'options' => [
-                                        ['name' => 'yamaha', 'label' => 'Yamaha', 'count' => 42, 'selected' => true],
-                                    ],
-                                ],
                             ],
                         ],
                     ],
@@ -268,11 +229,11 @@ class JsonParserTest extends TestCase
             ],
         ]);
 
-        $result = $this->parser->parseSearchResults($json, 1);
+        $facets = $this->parser->parseSearchFacets($json);
 
-        $this->assertCount(1, $result->facets);
+        $this->assertCount(1, $facets);
 
-        $facet = $result->facets[0];
+        $facet = $facets[0];
         $this->assertSame('brand', $facet->name);
         $this->assertSame('Merk', $facet->label);
         $this->assertTrue($facet->selected);
@@ -292,20 +253,16 @@ class JsonParserTest extends TestCase
         $this->assertCount(1, $facet->optionCategories[0]->options);
     }
 
-    public function test_parses_null_facet_data(): void
+    public function test_parses_empty_facets(): void
     {
         $json = json_encode([
-            'pageProps' => [
-                'serverSearchResults' => [
-                    'results' => [],
-                    'count' => 0,
-                ],
-            ],
+            'count' => 0,
+            'facets' => [],
         ]);
 
-        $result = $this->parser->parseSearchResults($json, 1);
+        $facets = $this->parser->parseSearchFacets($json);
 
-        $this->assertSame([], $result->facets);
+        $this->assertSame([], $facets);
     }
 
     // --- Detail Parsing ---
@@ -347,6 +304,19 @@ class JsonParserTest extends TestCase
 
         // Option groups may be empty in some fixtures, but should be an array
         $this->assertIsArray($detail->optionGroups);
+    }
+
+    public function test_parses_engine_power_without_concatenating_kw_value(): void
+    {
+        $json = $this->buildDetailJson([
+            'performance' => [
+                'enginePower' => ['formattedValue' => '83pk (61kW)', 'hasValue' => true],
+            ],
+        ]);
+
+        $detail = $this->parser->parseDetail($json);
+
+        $this->assertSame(83, $detail->vehicle->enginePower);
     }
 
     // --- BOVAG Warranty Derivation ---

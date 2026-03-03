@@ -40,7 +40,9 @@ class JsonParser
     }
 
     /**
-     * Parse a search results JSON response into a SearchResult DTO.
+     * Parse a search results JSON response from the REST API.
+     *
+     * Expects the direct REST API shape: `{ results: [...], count: N }`.
      *
      * @throws ViaBOVAGException if the JSON is invalid or missing expected structure
      */
@@ -48,29 +50,22 @@ class JsonParser
     {
         $data = $this->decodeJson($json);
 
-        $serverResults = $data['pageProps']['serverSearchResults'] ?? null;
-
-        if ($serverResults === null) {
-            throw new ViaBOVAGException('Invalid search response: missing serverSearchResults.');
-        }
-
         $listings = array_map(
             $this->mapListing(...),
-            $serverResults['results'] ?? [],
+            $data['results'] ?? [],
         );
-
-        $facets = $this->mapFacets($data['pageProps']['serverSearchFacets'] ?? null);
 
         return new SearchResult(
             listings: $listings,
-            totalCount: (int) ($serverResults['count'] ?? 0),
+            totalCount: (int) ($data['count'] ?? 0),
             currentPage: $currentPage,
-            facets: $facets,
         );
     }
 
     /**
-     * Parse only facet data from a search response.
+     * Parse facet data from the REST API facets endpoint.
+     *
+     * Expects the direct REST API shape: `{ count, facets: [...], ... }`.
      *
      * @return SearchFacet[]
      *
@@ -80,7 +75,7 @@ class JsonParser
     {
         $data = $this->decodeJson($json);
 
-        return $this->mapFacets($data['pageProps']['serverSearchFacets'] ?? null);
+        return $this->mapFacets($data);
     }
 
     /**
@@ -532,6 +527,9 @@ class JsonParser
     /**
      * Extract a numeric value from a structured field's formattedValue.
      *
+     * Extracts the first number (including thousand separators) from the string.
+     * This avoids concatenating multiple numbers, e.g. "83pk (61kW)" becomes 83 (not 8361).
+     *
      * @param  array<string, mixed>|null  $field
      */
     private function extractNumericValue(?array $field): ?int
@@ -545,10 +543,16 @@ class JsonParser
         }
 
         $value = $field['formattedValue'] ?? '';
-        // Strip non-numeric characters (e.g., "49.874 km" → "49874", "2015" → "2015")
-        $numeric = preg_replace('/[^0-9]/', '', $value);
 
-        return $numeric !== '' && $numeric !== null ? (int) $numeric : null;
+        // Match the first number, including dots as thousand separators (e.g. "16.165 km" => "16.165")
+        if (preg_match('/(\d[\d.]*)/', $value, $matches) !== 1) {
+            return null;
+        }
+
+        // Strip thousand-separator dots and cast to int
+        $numeric = str_replace('.', '', $matches[1]);
+
+        return $numeric !== '' ? (int) $numeric : null;
     }
 
     /**

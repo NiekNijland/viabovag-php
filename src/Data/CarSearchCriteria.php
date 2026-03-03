@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace NiekNijland\ViaBOVAG\Data;
 
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
+use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedRequestBody;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
 
 /** @phpstan-consistent-constructor */
 readonly class CarSearchCriteria implements SearchQuery
 {
     use HasSharedFilterSlugs;
+    use HasSharedRequestBody;
     use HasWithPage;
 
     /**
@@ -22,6 +24,12 @@ readonly class CarSearchCriteria implements SearchQuery
      * @param  SeatCount[]|null  $seatCounts
      * @param  DriveType[]|null  $driveTypes
      * @param  AccessoryFilter[]|null  $accessories
+     * @param  Condition[]|null  $conditions
+     * @param  BovagWarranty[]|null  $warranties
+     * @param  TransmissionType[]|null  $transmissions
+     * @param  FilterOption[]|null  $cities
+     * @param  FilterOption[]|null  $energyLabels
+     * @param  FilterOption[]|null  $specifiedBatteryRanges
      */
     public function __construct(
         // Core
@@ -67,6 +75,7 @@ readonly class CarSearchCriteria implements SearchQuery
         public ?string $postalCode = null,
         public ?Distance $distance = null,
         public ?FilterOption $city = null,
+        public ?array $cities = null,
 
         // BOVAG certifications
         public ?BovagWarranty $warranty = null,
@@ -102,6 +111,8 @@ readonly class CarSearchCriteria implements SearchQuery
         public ?bool $isPluginHybrid = null,
         public ?FilterOption $energyLabel = null,
         public ?FilterOption $specifiedBatteryRange = null,
+        public ?array $energyLabels = null,
+        public ?array $specifiedBatteryRanges = null,
 
         // Search
         public ?string $keywords = null,
@@ -113,6 +124,11 @@ readonly class CarSearchCriteria implements SearchQuery
 
         // Pagination
         public int $page = 1,
+
+        // Multi-select
+        public ?array $conditions = null,
+        public ?array $warranties = null,
+        public ?array $transmissions = null,
     ) {
         self::assertValidPage($page);
     }
@@ -156,6 +172,12 @@ readonly class CarSearchCriteria implements SearchQuery
 
         if ($this->transmission instanceof TransmissionType) {
             $filters[] = $this->transmission->slug();
+        }
+
+        if ($this->transmissions !== null) {
+            foreach ($this->transmissions as $transmission) {
+                $filters[] = $transmission->slug();
+            }
         }
 
         if ($this->gearCounts !== null) {
@@ -203,6 +225,12 @@ readonly class CarSearchCriteria implements SearchQuery
         // Car-specific filters
         if ($this->city instanceof FilterOption) {
             $filters[] = 'stad-'.$this->city->slug;
+        }
+
+        if ($this->cities !== null) {
+            foreach ($this->cities as $city) {
+                $filters[] = 'stad-'.$city->slug;
+            }
         }
 
         if ($this->isLeaseable === true) {
@@ -262,10 +290,228 @@ readonly class CarSearchCriteria implements SearchQuery
             $filters[] = 'energielabel-'.$this->energyLabel->slug;
         }
 
+        if ($this->energyLabels !== null) {
+            foreach ($this->energyLabels as $energyLabel) {
+                $filters[] = 'energielabel-'.$energyLabel->slug;
+            }
+        }
+
         if ($this->specifiedBatteryRange instanceof FilterOption) {
             $filters[] = 'opgegeven-bereik-'.$this->specifiedBatteryRange->slug;
         }
 
+        if ($this->specifiedBatteryRanges !== null) {
+            foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
+                $filters[] = 'opgegeven-bereik-'.$specifiedBatteryRange->slug;
+            }
+        }
+
         return $filters;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toRequestBody(): array
+    {
+        $body = $this->sharedRequestBody();
+
+        if ($this->engineCapacityFrom !== null) {
+            $body['EngineCapacityFrom'] = $this->engineCapacityFrom;
+        }
+
+        if ($this->engineCapacityTo !== null) {
+            $body['EngineCapacityTo'] = $this->engineCapacityTo;
+        }
+
+        if ($this->bodyTypes !== null) {
+            $body['BodyType'] = array_map(
+                fn (CarBodyType $bodyType): string => $bodyType->value,
+                $this->bodyTypes,
+            );
+        }
+
+        if ($this->fuelTypes !== null) {
+            $body['FuelType'] = array_map(
+                fn (CarFuelType $fuelType): string => $fuelType->value,
+                $this->fuelTypes,
+            );
+        }
+
+        $transmissions = [];
+
+        if ($this->transmission instanceof TransmissionType) {
+            $transmissions[] = $this->transmission->value;
+        }
+
+        if ($this->transmissions !== null) {
+            foreach ($this->transmissions as $transmission) {
+                $transmissions[] = $transmission->value;
+            }
+        }
+
+        $transmissions = array_values(array_unique($transmissions));
+
+        if ($transmissions !== []) {
+            $body['Transmission'] = $transmissions;
+        }
+
+        if ($this->gearCounts !== null) {
+            $body['GearCount'] = array_map(
+                fn (GearCount $gearCount): string => $gearCount->requestValue(),
+                $this->gearCounts,
+            );
+        }
+
+        if ($this->cylinderCounts !== null) {
+            $body['CylinderCount'] = array_map(
+                fn (CylinderCount $cylinderCount): string => $cylinderCount->requestValue(),
+                $this->cylinderCounts,
+            );
+        }
+
+        if ($this->seatCounts !== null) {
+            $body['SeatCount'] = array_map(
+                fn (SeatCount $seatCount): string => $seatCount->requestValue(),
+                $this->seatCounts,
+            );
+        }
+
+        if ($this->driveTypes !== null) {
+            $body['DriveType'] = array_map(
+                fn (DriveType $driveType): string => $driveType->value,
+                $this->driveTypes,
+            );
+        }
+
+        if ($this->accessories !== null) {
+            $body['Accessory'] = array_map(
+                fn (AccessoryFilter $accessory): string => $accessory->value,
+                $this->accessories,
+            );
+        }
+
+        if ($this->accelerationTo !== null) {
+            $body['AccelerationTo'] = $this->accelerationTo;
+        }
+
+        if ($this->topSpeedFrom !== null) {
+            $body['TopSpeedFrom'] = $this->topSpeedFrom;
+        }
+
+        if ($this->emptyMassTo !== null) {
+            $body['EmptyMassTo'] = $this->emptyMassTo;
+        }
+
+        $cities = [];
+
+        if ($this->city instanceof FilterOption) {
+            $cities[] = $this->city->slug;
+        }
+
+        if ($this->cities !== null) {
+            foreach ($this->cities as $city) {
+                $cities[] = $city->slug;
+            }
+        }
+
+        $cities = array_values(array_unique($cities));
+
+        if ($cities !== []) {
+            $body['City'] = count($cities) === 1 ? $cities[0] : $cities;
+        }
+
+        if ($this->isLeaseable === true) {
+            $body['IsLeaseable'] = true;
+        }
+
+        if ($this->doorCountFrom !== null) {
+            $body['DoorCountFrom'] = $this->doorCountFrom;
+        }
+
+        if ($this->doorCountTo !== null) {
+            $body['DoorCountTo'] = $this->doorCountTo;
+        }
+
+        if ($this->wheelSizeFrom !== null) {
+            $body['WheelSizeFrom'] = $this->wheelSizeFrom;
+        }
+
+        if ($this->wheelSizeTo !== null) {
+            $body['WheelSizeTo'] = $this->wheelSizeTo;
+        }
+
+        if ($this->brakedTowingWeightFrom !== null) {
+            $body['BrakedTowingWeightFrom'] = $this->brakedTowingWeightFrom;
+        }
+
+        if ($this->brakedTowingWeightTo !== null) {
+            $body['BrakedTowingWeightTo'] = $this->brakedTowingWeightTo;
+        }
+
+        if ($this->maximumMassTo !== null) {
+            $body['MaximumMassTo'] = $this->maximumMassTo;
+        }
+
+        // EV / Hybrid filters
+        if ($this->batteryCapacityFrom !== null) {
+            $body['BatteryCapacityFrom'] = $this->batteryCapacityFrom;
+        }
+
+        if ($this->batteryCapacityTo !== null) {
+            $body['BatteryCapacityTo'] = $this->batteryCapacityTo;
+        }
+
+        if ($this->maxChargingPowerHome !== null) {
+            $body['MaxChargingPowerHome'] = $this->maxChargingPowerHome;
+        }
+
+        if ($this->maxQuickChargingPower !== null) {
+            $body['MaxQuickChargingPower'] = $this->maxQuickChargingPower;
+        }
+
+        if ($this->isPluginHybrid === true) {
+            $body['IsPluginHybrid'] = true;
+        }
+
+        $energyLabels = [];
+
+        if ($this->energyLabel instanceof FilterOption) {
+            $energyLabels[] = $this->energyLabel->slug;
+        }
+
+        if ($this->energyLabels !== null) {
+            foreach ($this->energyLabels as $energyLabel) {
+                $energyLabels[] = $energyLabel->slug;
+            }
+        }
+
+        $energyLabels = array_values(array_unique($energyLabels));
+
+        if ($energyLabels !== []) {
+            $body['EnergyLabel'] = $energyLabels;
+        }
+
+        $specifiedBatteryRanges = [];
+
+        if ($this->specifiedBatteryRange instanceof FilterOption) {
+            $specifiedBatteryRanges[] = $this->specifiedBatteryRange->slug;
+        }
+
+        if ($this->specifiedBatteryRanges !== null) {
+            foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
+                $specifiedBatteryRanges[] = $specifiedBatteryRange->slug;
+            }
+        }
+
+        $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
+
+        if ($specifiedBatteryRanges !== []) {
+            $body['SpecifiedBatteryRange'] = count($specifiedBatteryRanges) === 1
+                ? $specifiedBatteryRanges[0]
+                : $specifiedBatteryRanges;
+        }
+
+        return $body;
     }
 }

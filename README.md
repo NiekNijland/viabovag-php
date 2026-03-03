@@ -205,6 +205,40 @@ $results = $client->search(new CamperSearchCriteria(
 ));
 ```
 
+### Multi-Select Filters
+
+Several filters support both singular and plural parameters. You can pass either one, or combine them.
+
+```php
+use NiekNijland\ViaBOVAG\Data\BovagWarranty;
+use NiekNijland\ViaBOVAG\Data\Brand;
+use NiekNijland\ViaBOVAG\Data\Condition;
+use NiekNijland\ViaBOVAG\Data\DriversLicense;
+use NiekNijland\ViaBOVAG\Data\FilterOption;
+use NiekNijland\ViaBOVAG\Data\Model;
+use NiekNijland\ViaBOVAG\Data\MotorcycleSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\TransmissionType;
+
+$results = $client->search(new MotorcycleSearchCriteria(
+    brand: new Brand(slug: 'yamaha', label: 'Yamaha'),
+    model: new Model(slug: 'mt-10-sp', label: 'MT-10 SP'),
+
+    // Shared multi-select
+    conditions: [Condition::New, Condition::Used],
+    warranties: [BovagWarranty::TwelveMonths, BovagWarranty::Manufacturer],
+
+    // Motorcycle multi-select
+    transmissions: [TransmissionType::Manual, TransmissionType::Automatic],
+    driversLicenses: [DriversLicense::A, DriversLicense::A2],
+    frameTypes: [
+        new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
+        new FilterOption(slug: 'trellis', label: 'Trellis'),
+    ],
+));
+```
+
+When both singular and plural variants are set (for example `condition` + `conditions`), values are merged and deduplicated.
+
 ### Working with Search Results
 
 `SearchResult` provides pagination helpers:
@@ -309,9 +343,11 @@ All search criteria classes share these filter parameters:
 | `enginePowerTo` | `?int` | Maximum engine power in HP |
 | `colors` | `?string[]` | Color filter values |
 | `condition` | `?Condition` | `Condition::Used` or `Condition::New` |
+| `conditions` | `?Condition[]` | Multi-select variant of `condition` |
 | `postalCode` | `?string` | Postal code for location search |
 | `distance` | `?Distance` | Currently ignored by viabovag API (postal code searches use 20 km default) |
 | `warranty` | `?BovagWarranty` | BOVAG warranty duration filter |
+| `warranties` | `?BovagWarranty[]` | Multi-select variant of `warranty` |
 | `fullyServiced` | `?bool` | 100% maintained |
 | `hasBovagChecklist` | `?bool` | 40-point BOVAG checklist completed |
 | `hasBovagMaintenanceFree` | `?bool` | BOVAG maintenance-free |
@@ -337,6 +373,7 @@ All search criteria classes share these filter parameters:
 | `bodyTypes` | `?CarBodyType[]` | Body type filters |
 | `fuelTypes` | `?CarFuelType[]` | Fuel type filters |
 | `transmission` | `?TransmissionType` | Transmission type |
+| `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
 | `gearCounts` | `?GearCount[]` | Number of gears |
 | `cylinderCounts` | `?CylinderCount[]` | Number of cylinders |
 | `seatCounts` | `?SeatCount[]` | Number of seats |
@@ -344,6 +381,7 @@ All search criteria classes share these filter parameters:
 | `accessories` | `?AccessoryFilter[]` | Required accessories |
 | `emptyMassTo` | `?int` | Maximum empty weight |
 | `city` | `?FilterOption` | City option value object (`City` facet) |
+| `cities` | `?FilterOption[]` | Multi-select variant of `city` |
 | `isLeaseable` | `?bool` | Online leaseable |
 | `doorCountFrom` | `?int` | Minimum door count |
 | `doorCountTo` | `?int` | Maximum door count |
@@ -358,7 +396,9 @@ All search criteria classes share these filter parameters:
 | `maxQuickChargingPower` | `?int` | Minimum quick charging power (kW) |
 | `isPluginHybrid` | `?bool` | Plugin hybrid vehicle |
 | `energyLabel` | `?FilterOption` | Energy label option value object (`EnergyLabel` facet) |
+| `energyLabels` | `?FilterOption[]` | Multi-select variant of `energyLabel` |
 | `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
+| `specifiedBatteryRanges` | `?FilterOption[]` | Multi-select variant of `specifiedBatteryRange` |
 
 ### Motorcycle-Specific Filters
 
@@ -369,8 +409,11 @@ All search criteria classes share these filter parameters:
 | `bodyTypes` | `?MotorcycleBodyType[]` | Body type filters |
 | `fuelTypes` | `?MotorcycleFuelType[]` | Fuel type filters |
 | `transmission` | `?TransmissionType` | Transmission type |
+| `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
 | `driversLicense` | `?DriversLicense` | Required license (A, A1, A2) |
+| `driversLicenses` | `?DriversLicense[]` | Multi-select variant of `driversLicense` |
 | `frameType` | `?FilterOption` | Frame type option value object (`FrameType` facet) |
+| `frameTypes` | `?FilterOption[]` | Multi-select variant of `frameType` |
 
 ### Bicycle-Specific Filters
 
@@ -381,12 +424,16 @@ All search criteria classes share these filter parameters:
 | `frameHeightFrom` | `?int` | Minimum frame height in cm |
 | `frameHeightTo` | `?int` | Maximum frame height in cm |
 | `frameMaterial` | `?FilterOption` | Frame material option value object (`FrameMaterial` facet) |
+| `frameMaterials` | `?FilterOption[]` | Multi-select variant of `frameMaterial` |
 | `brakeType` | `?FilterOption` | Brake type option value object (`BrakeType` facet) |
+| `brakeTypes` | `?FilterOption[]` | Multi-select variant of `brakeType` |
 | `batteryRemovable` | `?bool` | Removable battery |
 | `batteryCapacityFrom` | `?int` | Minimum battery capacity (Wh) |
 | `batteryCapacityTo` | `?int` | Maximum battery capacity (Wh) |
 | `engineBrand` | `?FilterOption` | Motor brand option value object (`EngineBrand` facet) |
+| `engineBrands` | `?FilterOption[]` | Multi-select variant of `engineBrand` |
 | `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
+| `specifiedBatteryRanges` | `?FilterOption[]` | Multi-select variant of `specifiedBatteryRange` |
 
 ### Camper-Specific Filters
 
@@ -395,13 +442,19 @@ All search criteria classes share these filter parameters:
 | `engineCapacityFrom` | `?int` | Minimum engine capacity in cc |
 | `engineCapacityTo` | `?int` | Maximum engine capacity in cc |
 | `transmission` | `?TransmissionType` | Transmission type |
+| `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
 | `bedCount` | `?int` | Number of sleeping places |
 | `bedLayout` | `?FilterOption` | Bed layout option value object (`BedLayout` facet) |
+| `bedLayouts` | `?FilterOption[]` | Multi-select variant of `bedLayout` |
 | `seatingLayout` | `?FilterOption` | Seating layout option value object (`SeatingLayout` facet) |
+| `seatingLayouts` | `?FilterOption[]` | Multi-select variant of `seatingLayout` |
 | `sanitaryLayout` | `?FilterOption` | Sanitary layout option value object (`SanitaryLayout` facet) |
+| `sanitaryLayouts` | `?FilterOption[]` | Multi-select variant of `sanitaryLayout` |
 | `kitchenLayout` | `?FilterOption` | Kitchen layout option value object (`KitchenLayout` facet) |
+| `kitchenLayouts` | `?FilterOption[]` | Multi-select variant of `kitchenLayout` |
 | `interiorHeightFrom` | `?int` | Minimum interior standing height in cm |
 | `camperChassisBrand` | `?FilterOption` | Chassis brand option value object (`CamperChassisBrand` facet) |
+| `camperChassisBrands` | `?FilterOption[]` | Multi-select variant of `camperChassisBrand` |
 | `maximumMassTo` | `?int` | Maximum mass limit |
 
 ## Data Transfer Objects
