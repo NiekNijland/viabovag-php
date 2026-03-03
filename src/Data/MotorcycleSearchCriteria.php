@@ -106,7 +106,7 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?array $frameTypes = null,
     ) {
         self::assertValidPage($page);
-        self::assertNoFrameTypeFilters($frameType, $frameTypes);
+        $this->assertNoFrameTypeFilters($frameType, $frameTypes);
     }
 
     public function mobilityType(): MobilityType
@@ -292,7 +292,7 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
     /**
      * @param  FilterOption[]|null  $frameTypes
      */
-    private static function assertNoFrameTypeFilters(?FilterOption $frameType, ?array $frameTypes): void
+    private function assertNoFrameTypeFilters(?FilterOption $frameType, ?array $frameTypes): void
     {
         if ($frameType instanceof FilterOption || ($frameTypes !== null && $frameTypes !== [])) {
             throw new InvalidArgumentException('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');

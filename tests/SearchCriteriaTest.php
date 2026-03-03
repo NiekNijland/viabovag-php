@@ -453,10 +453,10 @@ class SearchCriteriaTest extends TestCase
     public function test_motorcycle_criteria_accessory_and_performance_filters(): void
     {
         $criteria = new MotorcycleSearchCriteria(
-            accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
-            accessories: [new FilterOption(slug: 'buddyseat', label: 'Buddyseat')],
             accelerationTo: 8,
             topSpeedFrom: 150,
+            accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
+            accessories: [new FilterOption(slug: 'buddyseat', label: 'Buddyseat')],
         );
 
         $slugs = $criteria->toFilterSlugs();

@@ -786,13 +786,13 @@ class ViaBOVAGTest extends TestCase
     public function test_search_criteria_request_body_supports_motorcycle_accessories_and_performance_filters(): void
     {
         $criteria = new MotorcycleSearchCriteria(
+            accelerationTo: 8,
+            topSpeedFrom: 150,
             accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
             accessories: [
                 new FilterOption(slug: 'buddyseat', label: 'Buddyseat'),
                 new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
             ],
-            accelerationTo: 8,
-            topSpeedFrom: 150,
         );
 
         $body = $criteria->toRequestBody();
