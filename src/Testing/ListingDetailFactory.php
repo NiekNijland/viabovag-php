@@ -38,6 +38,7 @@ class ListingDetailFactory
             'fuelConsumption' => null,
             'bijtellingPercentage' => null,
             'returnWarrantyMileage' => null,
+            'driversLicense' => null,
         ];
 
         $data = array_merge($defaults, $overrides);
@@ -66,6 +67,7 @@ class ListingDetailFactory
             fuelConsumption: $data['fuelConsumption'],
             bijtellingPercentage: $data['bijtellingPercentage'],
             returnWarrantyMileage: $data['returnWarrantyMileage'],
+            driversLicense: $data['driversLicense'],
         );
     }
 }

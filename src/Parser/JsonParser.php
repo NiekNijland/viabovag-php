@@ -7,6 +7,7 @@ namespace NiekNijland\ViaBOVAG\Parser;
 use JsonException;
 use NiekNijland\ViaBOVAG\Data\Accessory;
 use NiekNijland\ViaBOVAG\Data\Company;
+use NiekNijland\ViaBOVAG\Data\DriversLicense;
 use NiekNijland\ViaBOVAG\Data\Listing;
 use NiekNijland\ViaBOVAG\Data\ListingDetail;
 use NiekNijland\ViaBOVAG\Data\Media;
@@ -143,6 +144,10 @@ class JsonParser
             fuelConsumption: $fuelConsumption,
             bijtellingPercentage: $bijtellingPercentage,
             returnWarrantyMileage: isset($certainties['returnWarrantyMileage']) ? (int) $certainties['returnWarrantyMileage'] : null,
+            driversLicense: $this->extractDriversLicense(
+                $vehicleSpecs['general']['driversLicense'] ?? null,
+                $vehicleSpecs['specificationGroups'] ?? [],
+            ),
         );
     }
 
@@ -359,7 +364,7 @@ class JsonParser
             bodyType: $this->extractValue($general['bodyType'] ?? null),
             transmissionType: $this->extractFormattedValueOrNull($technical['transmission'] ?? null),
             engineCapacity: $this->extractNumericValue($technical['engineCapacity'] ?? null),
-            enginePower: $this->extractNumericValue($performance['enginePower'] ?? null),
+            enginePower: $this->extractEnginePowerInKw($performance['enginePower'] ?? null),
             warranties: $warranties,
             certaintyKeys: $certaintyKeys,
             fullyServiced: $this->extractBoolValue($certainties['isFullyMaintained'] ?? null) ?? false,
@@ -521,6 +526,73 @@ class JsonParser
     }
 
     /**
+     * @param  array<string, mixed>|null  $driversLicenseField
+     * @param  array<int, array<string, mixed>>  $specificationGroups
+     */
+    private function extractDriversLicense(?array $driversLicenseField, array $specificationGroups): ?DriversLicense
+    {
+        if (is_array($driversLicenseField)) {
+            $driversLicenseValue = $this->extractFormattedValueOrNull($driversLicenseField)
+                ?? $this->extractValue($driversLicenseField);
+
+            $driversLicense = $this->parseDriversLicenseValue($driversLicenseValue);
+
+            if ($driversLicense instanceof DriversLicense) {
+                return $driversLicense;
+            }
+        }
+
+        foreach ($specificationGroups as $group) {
+            $specifications = $group['specifications'] ?? [];
+
+            if (! is_array($specifications)) {
+                continue;
+            }
+
+            foreach ($specifications as $specification) {
+                if (! is_array($specification)) {
+                    continue;
+                }
+
+                $label = $specification['label'] ?? null;
+
+                if (! is_string($label) || ! str_contains(strtolower($label), 'rijbewijs')) {
+                    continue;
+                }
+
+                $value = $specification['formattedValue'] ?? $specification['value'] ?? null;
+
+                if (! is_string($value)) {
+                    continue;
+                }
+
+                $driversLicense = $this->parseDriversLicenseValue($value);
+
+                if ($driversLicense instanceof DriversLicense) {
+                    return $driversLicense;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function parseDriversLicenseValue(?string $value): ?DriversLicense
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        if (preg_match('/\b(A1|A2|A)\b/i', $value, $matches) !== 1) {
+            return null;
+        }
+
+        $driversLicense = strtoupper($matches[1]);
+
+        return DriversLicense::tryFrom($driversLicense);
+    }
+
+    /**
      * Extract formattedValue from a structured field, or return the string directly.
      *
      * @param  array<string, mixed>|string  $field
@@ -577,9 +649,6 @@ class JsonParser
     /**
      * Extract a numeric value from a structured field's formattedValue.
      *
-     * Extracts the first number (including thousand separators) from the string.
-     * This avoids concatenating multiple numbers, e.g. "83pk (61kW)" becomes 83 (not 8361).
-     *
      * @param  array<string, mixed>|null  $field
      */
     private function extractNumericValue(?array $field): ?int
@@ -603,6 +672,44 @@ class JsonParser
         $numeric = str_replace('.', '', $matches[1]);
 
         return $numeric !== '' ? (int) $numeric : null;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $field
+     */
+    private function extractEnginePowerInKw(?array $field): ?int
+    {
+        if ($field === null) {
+            return null;
+        }
+
+        if (! ($field['hasValue'] ?? false)) {
+            return null;
+        }
+
+        $formattedValue = $field['formattedValue'] ?? '';
+
+        if (! is_string($formattedValue) || $formattedValue === '') {
+            return null;
+        }
+
+        if (preg_match('/(\d[\d.]*)\s*kW\b/i', $formattedValue, $matches) === 1) {
+            $kilowattValue = str_replace('.', '', $matches[1]);
+
+            return $kilowattValue !== '' ? (int) $kilowattValue : null;
+        }
+
+        if (preg_match('/(\d[\d.]*)\s*(pk|hp)\b/i', $formattedValue, $matches) === 1) {
+            $horsePowerValue = str_replace('.', '', $matches[1]);
+
+            if ($horsePowerValue === '') {
+                return null;
+            }
+
+            return (int) round((int) $horsePowerValue * 0.735499);
+        }
+
+        return $this->extractNumericValue($field);
     }
 
     /**

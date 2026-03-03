@@ -136,6 +136,13 @@ class ViaBOVAG implements ViaBOVAGInterface
         return $this->parser->parseDetail($json);
     }
 
+    public function getDetailByUrl(string $url): ListingDetail
+    {
+        [$slug, $mobilityType] = $this->extractSlugAndMobilityTypeFromDetailUrl($url);
+
+        return $this->getDetailBySlug($slug, $mobilityType);
+    }
+
     public function resetSession(): void
     {
         $this->invalidateBuildId();
@@ -311,6 +318,45 @@ class ViaBOVAG implements ViaBOVAGInterface
     }
 
     // --- _next/data (detail pages only) ---
+
+    /**
+     * @return array{0: string, 1: MobilityType}
+     */
+    private function extractSlugAndMobilityTypeFromDetailUrl(string $url): array
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+
+        if (! is_string($path) || $path === '') {
+            throw new ViaBOVAGException('Invalid detail URL: missing path.');
+        }
+
+        $segments = array_values(array_filter(explode('/', trim($path, '/'))));
+
+        if (count($segments) < 3 || strtolower($segments[1]) !== 'aanbod') {
+            throw new ViaBOVAGException('Invalid detail URL: expected /{mobilityType}/aanbod/{slug}.');
+        }
+
+        $mobilityType = $this->mobilityTypeFromUrlSegment($segments[0]);
+
+        if (! $mobilityType instanceof MobilityType) {
+            throw new ViaBOVAGException('Invalid detail URL: unknown mobility type segment "'.$segments[0].'".');
+        }
+
+        $slug = rawurldecode($segments[count($segments) - 1]);
+
+        return [$slug, $mobilityType];
+    }
+
+    private function mobilityTypeFromUrlSegment(string $segment): ?MobilityType
+    {
+        $normalizedSegment = strtolower($segment);
+
+        return match ($normalizedSegment) {
+            'motoren' => MobilityType::Motorcycle,
+            'fietsen' => MobilityType::Bicycle,
+            default => MobilityType::fromApiValue($normalizedSegment),
+        };
+    }
 
     private function buildDetailUrl(string $slug, MobilityType $mobilityType): string
     {

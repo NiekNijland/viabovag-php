@@ -37,5 +37,23 @@ readonly class ListingDetail
         public ?string $fuelConsumption = null,
         public ?string $bijtellingPercentage = null,
         public ?int $returnWarrantyMileage = null,
+        public ?DriversLicense $driversLicense = null,
     ) {}
+
+    public function descriptionText(): ?string
+    {
+        if ($this->description === null) {
+            return null;
+        }
+
+        $description = preg_replace('/<br\s*\/?>/i', "\n", $this->description) ?? $this->description;
+        $description = strip_tags($description);
+        $description = html_entity_decode($description, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $description = preg_replace('/[\t ]+/', ' ', $description) ?? $description;
+        $description = preg_replace('/ *\n */', "\n", $description) ?? $description;
+        $description = preg_replace('/\n{3,}/', "\n\n", $description) ?? $description;
+        $description = trim($description);
+
+        return $description !== '' ? $description : null;
+    }
 }

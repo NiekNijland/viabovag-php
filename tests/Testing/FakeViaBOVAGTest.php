@@ -112,6 +112,16 @@ class FakeViaBOVAGTest extends TestCase
         $this->assertSame('Custom Title', $detail->title);
     }
 
+    public function test_get_detail_by_url_records_call(): void
+    {
+        $fake = new FakeViaBOVAG;
+
+        $detail = $fake->getDetailByUrl('https://www.viabovag.nl/motor/aanbod/test-slug');
+
+        $this->assertNotEmpty($detail->id);
+        $fake->assertCalled('getDetailByUrl', 1);
+    }
+
     public function test_get_detail_from_listing(): void
     {
         $listing = ListingFactory::make();

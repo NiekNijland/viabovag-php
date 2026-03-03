@@ -538,6 +538,17 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('chopper', $slugs);
     }
 
+    public function test_motorcycle_body_type_try_from_slug_maps_known_values(): void
+    {
+        $this->assertSame(MotorcycleBodyType::SuperSport, MotorcycleBodyType::tryFromSlug('supersport'));
+        $this->assertSame(MotorcycleBodyType::Sidecar, MotorcycleBodyType::tryFromSlug('zijspan'));
+    }
+
+    public function test_motorcycle_body_type_try_from_slug_returns_null_for_unknown_value(): void
+    {
+        $this->assertNull(MotorcycleBodyType::tryFromSlug('unknown-slug'));
+    }
+
     public function test_motorcycle_criteria_fuel_types(): void
     {
         $criteria = new MotorcycleSearchCriteria(

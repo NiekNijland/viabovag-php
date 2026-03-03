@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG\Tests;
 
+use NiekNijland\ViaBOVAG\Data\DriversLicense;
 use NiekNijland\ViaBOVAG\Data\MobilityType;
 use NiekNijland\ViaBOVAG\Exception\ViaBOVAGException;
 use NiekNijland\ViaBOVAG\Parser\JsonParser;
@@ -306,7 +307,7 @@ class JsonParserTest extends TestCase
         $this->assertIsArray($detail->optionGroups);
     }
 
-    public function test_parses_engine_power_without_concatenating_kw_value(): void
+    public function test_parses_engine_power_in_kw_when_both_hp_and_kw_are_present(): void
     {
         $json = $this->buildDetailJson([
             'performance' => [
@@ -316,7 +317,50 @@ class JsonParserTest extends TestCase
 
         $detail = $this->parser->parseDetail($json);
 
-        $this->assertSame(83, $detail->vehicle->enginePower);
+        $this->assertSame(61, $detail->vehicle->enginePower);
+    }
+
+    public function test_parses_drivers_license_from_general_section(): void
+    {
+        $json = $this->buildDetailJson([
+            'general' => [
+                'vehicleType' => ['value' => 'motor', 'formattedValue' => 'Motor', 'hasValue' => true],
+                'brand' => ['value' => 'Test', 'formattedValue' => 'Test', 'hasValue' => true],
+                'model' => ['value' => 'Model', 'formattedValue' => 'Model', 'hasValue' => true],
+                'driversLicense' => ['value' => 'A2', 'formattedValue' => 'A2', 'hasValue' => true],
+            ],
+        ]);
+
+        $detail = $this->parser->parseDetail($json);
+
+        $this->assertSame(DriversLicense::A2, $detail->driversLicense);
+    }
+
+    public function test_parses_drivers_license_from_specification_groups_when_general_field_is_missing(): void
+    {
+        $json = $this->buildDetailJson([
+            'specificationGroups' => [[
+                'name' => 'Algemeen',
+                'specifications' => [[
+                    'label' => 'Rijbewijs',
+                    'formattedValue' => 'A1',
+                    'hasValue' => true,
+                ]],
+            ]],
+        ]);
+
+        $detail = $this->parser->parseDetail($json);
+
+        $this->assertSame(DriversLicense::A1, $detail->driversLicense);
+    }
+
+    public function test_returns_plain_text_description_accessor(): void
+    {
+        $json = $this->buildDetailJsonWithDescription('<p>Line 1<br />Line 2 &amp; more</p>');
+
+        $detail = $this->parser->parseDetail($json);
+
+        $this->assertSame("Line 1\nLine 2 & more", $detail->descriptionText());
     }
 
     // --- BOVAG Warranty Derivation ---
@@ -510,6 +554,38 @@ class JsonParserTest extends TestCase
                     'advertisement' => [
                         'title' => 'Test Vehicle',
                         'price' => $price,
+                        'media' => [],
+                        'company' => ['name' => 'Test Dealer'],
+                    ],
+                    'vehicle' => [
+                        'general' => [
+                            'brand' => ['formattedValue' => 'Test', 'hasValue' => true],
+                            'model' => ['formattedValue' => 'Model', 'hasValue' => true],
+                        ],
+                        'history' => [
+                            'mileage' => ['formattedValue' => '0 km', 'hasValue' => true],
+                            'productionYear' => ['formattedValue' => '2020', 'hasValue' => true],
+                        ],
+                        'certaintyKeys' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    private function buildDetailJsonWithDescription(?string $description): string
+    {
+        return json_encode([
+            'pageProps' => [
+                'vehicle' => [
+                    'id' => 'test',
+                    'advertisement' => [
+                        'title' => 'Test Vehicle',
+                        'price' => ['formattedValue' => '€ 10.000,-', 'hasValue' => true],
+                        'comments' => [
+                            'formattedValue' => $description,
+                            'hasValue' => $description !== null,
+                        ],
                         'media' => [],
                         'company' => ['name' => 'Test Dealer'],
                     ],

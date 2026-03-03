@@ -33,4 +33,17 @@ enum MotorcycleBodyType: string
     {
         return strtolower($this->value);
     }
+
+    public static function tryFromSlug(string $slug): ?self
+    {
+        $normalizedSlug = strtolower(trim($slug));
+
+        foreach (self::cases() as $bodyType) {
+            if ($bodyType->slug() === $normalizedSlug) {
+                return $bodyType;
+            }
+        }
+
+        return null;
+    }
 }

@@ -173,6 +173,14 @@ class FakeViaBOVAG implements ViaBOVAGInterface
         return $this->listingDetail ?? ListingDetailFactory::make();
     }
 
+    public function getDetailByUrl(string $url): ListingDetail
+    {
+        $this->calls[] = new RecordedCall('getDetailByUrl', [$url]);
+        $this->throwIfConfigured();
+
+        return $this->listingDetail ?? ListingDetailFactory::make();
+    }
+
     public function resetSession(): void
     {
         $this->calls[] = new RecordedCall('resetSession', []);

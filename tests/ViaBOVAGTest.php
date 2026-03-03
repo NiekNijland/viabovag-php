@@ -481,6 +481,40 @@ class ViaBOVAGTest extends TestCase
         $this->assertNotEmpty($detail->id);
     }
 
+    public function test_get_detail_by_url_parses_slug_and_mobility_type(): void
+    {
+        $homepageHtml = $this->fixture('homepage.html');
+        $detailJson = $this->fixture('listing-detail.json');
+
+        $history = [];
+        $mock = new MockHandler([
+            new Response(200, [], $homepageHtml),
+            new Response(200, [], $detailJson),
+        ]);
+
+        $client = $this->createClientWithHistory($mock, $history);
+        $detail = $client->getDetailByUrl('https://www.viabovag.nl/auto/aanbod/volkswagen-golf-abc123?utm_source=test');
+
+        $this->assertNotEmpty($detail->id);
+
+        /** @var Request $detailRequest */
+        $detailRequest = $history[1]['request'];
+        $query = urldecode($detailRequest->getUri()->getQuery());
+
+        $this->assertStringContainsString('mobilityType=auto', $query);
+        $this->assertStringContainsString('vehicleUrl=volkswagen-golf-abc123', $query);
+    }
+
+    public function test_get_detail_by_url_throws_for_invalid_url(): void
+    {
+        $client = $this->createClient(new MockHandler);
+
+        $this->expectException(ViaBOVAGException::class);
+        $this->expectExceptionMessage('Invalid detail URL');
+
+        $client->getDetailByUrl('https://www.viabovag.nl/onbekend/aanbod/test-slug');
+    }
+
     // --- Stale Build ID Retry (detail pages only) ---
 
     public function test_retries_on_stale_build_id(): void

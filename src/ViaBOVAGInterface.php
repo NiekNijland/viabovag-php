@@ -88,6 +88,13 @@ interface ViaBOVAGInterface
     public function getDetailBySlug(string $slug, MobilityType $mobilityType): ListingDetail;
 
     /**
+     * Get full detail for a listing by its full URL.
+     *
+     * @throws ViaBOVAGException
+     */
+    public function getDetailByUrl(string $url): ListingDetail;
+
+    /**
      * Force a fresh build ID on the next request.
      */
     public function resetSession(): void;

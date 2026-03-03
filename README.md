@@ -306,13 +306,16 @@ foreach ($client->searchAll(new CarSearchCriteria(
 
 ### Getting Listing Details
 
-Fetch full vehicle details from a listing or by URL slug:
+Fetch full vehicle details from a listing, by full URL, or by URL slug:
 
 ```php
 use NiekNijland\ViaBOVAG\Data\MobilityType;
 
 // From a listing object (mobility type is inferred)
 $detail = $client->getDetail($listing);
+
+// By full listing URL (slug + mobility type are parsed automatically)
+$detail = $client->getDetailByUrl('https://www.viabovag.nl/motor/aanbod/suzuki-gsx-r-1300-hayabusa-abc123');
 
 // By slug (mobility type is required)
 $detail = $client->getDetailBySlug('suzuki-gsx-r-1300-hayabusa-abc123', MobilityType::Motorcycle);
@@ -326,7 +329,9 @@ $detail->id;                 // UUID
 $detail->title;              // Vehicle title
 $detail->price;              // Price in whole euros
 $detail->description;        // Dealer description (HTML)
+$detail->descriptionText();  // Dealer description (plain text)
 $detail->licensePlate;       // License plate number
+$detail->driversLicense;     // Required license (DriversLicense enum)
 $detail->media;              // Media[] (images and videos)
 $detail->vehicle;            // Vehicle DTO with full specs
 $detail->company;            // Company DTO with address, coordinates, reviews
@@ -494,7 +499,7 @@ Returned in search results.
 
 ### `ListingDetail`
 
-Returned by `getDetail()` and `getDetailBySlug()`.
+Returned by `getDetail()`, `getDetailByUrl()`, and `getDetailBySlug()`.
 
 | Property | Type | Description |
 |---|---|---|
@@ -503,6 +508,7 @@ Returned by `getDetail()` and `getDetailBySlug()`.
 | `price` | `int` | Price in whole euros |
 | `priceExcludesVat` | `bool` | Whether price excludes VAT |
 | `description` | `?string` | Dealer description (HTML) |
+| `descriptionText()` | `?string` | Dealer description (plain text accessor) |
 | `url` | `?string` | Full URL on viabovag.nl |
 | `mobilityType` | `?MobilityType` | Vehicle category enum |
 | `media` | `Media[]` | Images and videos |
@@ -512,6 +518,7 @@ Returned by `getDetail()` and `getDetailBySlug()`.
 | `accessories` | `Accessory[]` | Vehicle accessories |
 | `optionGroups` | `OptionGroup[]` | Named option groups |
 | `licensePlate` | `?string` | License plate number |
+| `driversLicense` | `?DriversLicense` | Required license category |
 | `externalNumber` | `?string` | External reference number |
 | `structuredData` | `array\|string\|null` | JSON-LD structured data |
 | `isEligibleForVehicleReport` | `bool` | Eligible for vehicle history report |
@@ -540,7 +547,7 @@ Vehicle data shared between search results and detail pages. Extended fields (ma
 | `bodyType` | `?string` | Body type |
 | `transmissionType` | `?string` | Transmission type |
 | `engineCapacity` | `?int` | Engine capacity in cc |
-| `enginePower` | `?int` | Engine power in HP |
+| `enginePower` | `?int` | Engine power in kW |
 | `warranties` | `string[]` | Warranty keys |
 | `certaintyKeys` | `string[]` | BOVAG certainty keys |
 | `fullyServiced` | `bool` | 100% maintained |
