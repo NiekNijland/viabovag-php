@@ -1731,9 +1731,9 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame('application/json', $facetsRequest->getHeaderLine('Content-Type'));
     }
 
-    // --- Search REST API Client-Side Fallbacks ---
+    // --- Search REST API Server Filtering ---
 
-    public function test_search_applies_financeable_fallback_filter_when_requested(): void
+    public function test_search_uses_server_results_for_financeable_filter(): void
     {
         $searchJson = $this->buildSearchJsonFromListings([
             [
@@ -1753,11 +1753,12 @@ class ViaBOVAGTest extends TestCase
         $client = $this->createClient($mock);
         $result = $client->search(new MotorcycleSearchCriteria(isFinanceable: true));
 
-        $this->assertCount(1, $result->listings);
+        $this->assertCount(2, $result->listings);
         $this->assertSame('financeable-yes', $result->listings[0]->id);
+        $this->assertSame('financeable-no', $result->listings[1]->id);
     }
 
-    public function test_search_applies_import_odometer_check_fallback_filter_when_requested(): void
+    public function test_search_uses_server_results_for_import_odometer_check_filter(): void
     {
         $searchJson = $this->buildSearchJsonFromListings([
             [
@@ -1781,11 +1782,12 @@ class ViaBOVAGTest extends TestCase
         $client = $this->createClient($mock);
         $result = $client->search(new MotorcycleSearchCriteria(hasBovagImportOdometerCheck: true));
 
-        $this->assertCount(1, $result->listings);
+        $this->assertCount(2, $result->listings);
         $this->assertSame('import-check-yes', $result->listings[0]->id);
+        $this->assertSame('import-check-no', $result->listings[1]->id);
     }
 
-    public function test_search_applies_client_side_mileage_sort_when_requested(): void
+    public function test_search_uses_server_order_for_mileage_sort(): void
     {
         $searchJson = $this->buildSearchJsonFromListings([
             [
@@ -1814,10 +1816,10 @@ class ViaBOVAGTest extends TestCase
             $result->listings,
         );
 
-        $this->assertSame([0, 1500, 5000], $mileage);
+        $this->assertSame([5000, 1500, 0], $mileage);
     }
 
-    public function test_search_applies_client_side_city_multi_select_filtering(): void
+    public function test_search_uses_server_results_for_city_multi_select_filter(): void
     {
         $searchJson = $this->buildSearchJsonFromListings([
             ['id' => 'city-amsterdam', 'company' => ['city' => 'Amsterdam']],
@@ -1835,12 +1837,13 @@ class ViaBOVAGTest extends TestCase
             new FilterOption(slug: 'utrecht', label: 'Utrecht'),
         ]));
 
-        $this->assertCount(2, $result->listings);
+        $this->assertCount(3, $result->listings);
         $this->assertContains('city-amsterdam', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
         $this->assertContains('city-utrecht', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+        $this->assertContains('city-rotterdam', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
     }
 
-    public function test_search_applies_has_nap_weblabel_fallback_filter_when_requested(): void
+    public function test_search_uses_server_results_for_has_nap_weblabel_filter(): void
     {
         $searchJson = $this->buildSearchJsonFromListings([
             ['id' => 'nap-yes', 'vehicle' => ['certaintyKeys' => ['HasNapWeblabel']]],
@@ -1854,11 +1857,12 @@ class ViaBOVAGTest extends TestCase
         $client = $this->createClient($mock);
         $result = $client->search(new CarSearchCriteria(hasNapWeblabel: true));
 
-        $this->assertCount(1, $result->listings);
+        $this->assertCount(2, $result->listings);
         $this->assertSame('nap-yes', $result->listings[0]->id);
+        $this->assertSame('nap-no', $result->listings[1]->id);
     }
 
-    public function test_search_applies_client_side_specified_battery_range_multi_select_filtering(): void
+    public function test_search_uses_single_server_request_for_specified_battery_range_multi_select(): void
     {
         $range300Json = $this->buildSearchJsonFromListings([
             ['id' => 'range-300'],
@@ -1868,12 +1872,13 @@ class ViaBOVAGTest extends TestCase
             ['id' => 'range-400'],
         ], totalCount: 1);
 
+        $history = [];
         $mock = new MockHandler([
             new Response(200, [], $range300Json),
             new Response(200, [], $range400Json),
         ]);
 
-        $client = $this->createClient($mock);
+        $client = $this->createClientWithHistory($mock, $history);
         $result = $client->search(new CarSearchCriteria(
             specifiedBatteryRanges: [
                 new FilterOption(slug: '300', label: '300 km'),
@@ -1881,9 +1886,10 @@ class ViaBOVAGTest extends TestCase
             ],
         ));
 
-        $this->assertCount(2, $result->listings);
+        $this->assertCount(1, $result->listings);
         $this->assertContains('range-300', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
-        $this->assertContains('range-400', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+
+        $this->assertCount(1, $history);
     }
 
     public function test_search_retries_with_sanitized_colors_when_api_rejects_color_filter(): void
@@ -1959,7 +1965,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertCount(2, $history);
     }
 
-    public function test_search_applies_not_imported_fallback_filter_when_requested(): void
+    public function test_search_uses_server_results_for_not_imported_filter(): void
     {
         $allListingsJson = $this->buildSearchJsonFromListings([
             ['id' => 'import-no'],
@@ -1975,15 +1981,18 @@ class ViaBOVAGTest extends TestCase
             new Response(200, [], $importedOnlyJson),
         ]);
 
-        $client = $this->createClient($mock);
+        $history = [];
+        $client = $this->createClientWithHistory($mock, $history);
         $result = $client->search(new MotorcycleSearchCriteria(isImported: false));
 
-        $this->assertCount(1, $result->listings);
+        $this->assertCount(2, $result->listings);
         $this->assertSame('import-no', $result->listings[0]->id);
-        $this->assertSame(1, $result->totalCount);
+        $this->assertSame('import-yes', $result->listings[1]->id);
+        $this->assertSame(2, $result->totalCount);
+        $this->assertCount(1, $history);
     }
 
-    public function test_search_applies_client_side_mileage_range_filtering_when_requested(): void
+    public function test_search_uses_server_results_for_mileage_range_filter(): void
     {
         $withoutMileageFilterJson = $this->buildSearchJsonFromListings([
             ['id' => 'mileage-1500', 'vehicle' => ['mileage' => 1500]],
@@ -1998,10 +2007,10 @@ class ViaBOVAGTest extends TestCase
         $client = $this->createClient($mock);
         $result = $client->search(new MotorcycleSearchCriteria(mileageTo: 2000));
 
-        $this->assertCount(2, $result->listings);
+        $this->assertCount(3, $result->listings);
         $this->assertContains('mileage-1500', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
         $this->assertContains('mileage-0', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
-        $this->assertNotContains('mileage-9999', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
+        $this->assertContains('mileage-9999', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
     }
 
     /**
