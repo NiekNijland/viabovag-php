@@ -118,15 +118,15 @@ use NiekNijland\ViaBOVAG\Data\FacetName;
 use NiekNijland\ViaBOVAG\Data\Model;
 use NiekNijland\ViaBOVAG\Data\MobilityType;
 
-$frameTypes = $client->getFacetOptions(
+$categories = $client->getFacetOptions(
     MobilityType::Motorcycle,
-    FacetName::FrameType,
+    FacetName::BodyType,
     new Brand(slug: 'yamaha', label: 'Yamaha'),
     new Model(slug: 'mt-07', label: 'MT-07'),
 );
 
-foreach ($frameTypes as $frameType) {
-    echo "{$frameType->label} ({$frameType->slug}) - {$frameType->count}\n";
+foreach ($categories as $category) {
+    echo "{$category->label} ({$category->slug}) - {$category->count}\n";
 }
 ```
 
@@ -230,9 +230,9 @@ $results = $client->search(new MotorcycleSearchCriteria(
     // Motorcycle multi-select
     transmissions: [TransmissionType::Manual, TransmissionType::Automatic],
     driversLicenses: [DriversLicense::A, DriversLicense::A2],
-    frameTypes: [
-        new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
-        new FilterOption(slug: 'trellis', label: 'Trellis'),
+    accessories: [
+        new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
+        new FilterOption(slug: 'buddyseat', label: 'Buddyseat'),
     ],
 ));
 ```
@@ -362,6 +362,10 @@ All search criteria classes share these filter parameters:
 | `sortOrder` | `?SortOrder` | Sort order for results |
 | `page` | `int` | Page number (default: `1`) |
 
+`keywords` is free-text search across listing content and is not equivalent to model matching. For model name filtering, prefer `modelKeywords` or an explicit `model` value object.
+
+For `enginePowerFrom` / `enginePowerTo`, viabovag uses discrete power buckets internally (`EnginePower50`, `EnginePower75`, etc.). This package automatically formats and normalizes your numeric values to those API tokens (`from` rounds up to the next bucket, `to` rounds down to the previous bucket). For best precision, use values returned by `getFacetOptions()` for `FacetName::EnginePowerFrom` / `FacetName::EnginePowerTo`.
+
 ### Car-Specific Filters
 
 | Parameter | Type | Description |
@@ -398,7 +402,7 @@ All search criteria classes share these filter parameters:
 | `energyLabel` | `?FilterOption` | Energy label option value object (`EnergyLabel` facet) |
 | `energyLabels` | `?FilterOption[]` | Multi-select variant of `energyLabel` |
 | `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
-| `specifiedBatteryRanges` | `?FilterOption[]` | Multi-select variant of `specifiedBatteryRange` |
+| `specifiedBatteryRanges` | `?FilterOption[]` | Backward-compatible input list; first value is used because the live API accepts only one range |
 
 ### Motorcycle-Specific Filters
 
@@ -406,14 +410,18 @@ All search criteria classes share these filter parameters:
 |---|---|---|
 | `engineCapacityFrom` | `?int` | Minimum engine capacity in cc |
 | `engineCapacityTo` | `?int` | Maximum engine capacity in cc |
-| `bodyTypes` | `?MotorcycleBodyType[]` | Body type filters |
+| `accelerationTo` | `?int` | Maximum 0-100 acceleration time |
+| `topSpeedFrom` | `?int` | Minimum top speed |
+| `bodyTypes` | `?MotorcycleBodyType[]` | Category filters (`BodyType` facet, e.g. Crosser, Naked, Tourer) |
 | `fuelTypes` | `?MotorcycleFuelType[]` | Fuel type filters |
 | `transmission` | `?TransmissionType` | Transmission type |
 | `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
 | `driversLicense` | `?DriversLicense` | Required license (A, A1, A2) |
 | `driversLicenses` | `?DriversLicense[]` | Multi-select variant of `driversLicense` |
-| `frameType` | `?FilterOption` | Frame type option value object (`FrameType` facet) |
-| `frameTypes` | `?FilterOption[]` | Multi-select variant of `frameType` |
+| `accessory` | `?FilterOption` | Accessory option value object (`Accessory` facet) |
+| `accessories` | `?FilterOption[]` | Multi-select variant of `accessory` |
+| `frameType` | `?FilterOption` | Unsupported for motorcycles (constructor throws). Use `bodyTypes` for category filtering |
+| `frameTypes` | `?FilterOption[]` | Unsupported for motorcycles (constructor throws). Use `bodyTypes` for category filtering |
 
 ### Bicycle-Specific Filters
 
@@ -433,7 +441,7 @@ All search criteria classes share these filter parameters:
 | `engineBrand` | `?FilterOption` | Motor brand option value object (`EngineBrand` facet) |
 | `engineBrands` | `?FilterOption[]` | Multi-select variant of `engineBrand` |
 | `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
-| `specifiedBatteryRanges` | `?FilterOption[]` | Multi-select variant of `specifiedBatteryRange` |
+| `specifiedBatteryRanges` | `?FilterOption[]` | Backward-compatible input list; first value is used because the live API accepts only one range |
 
 ### Camper-Specific Filters
 

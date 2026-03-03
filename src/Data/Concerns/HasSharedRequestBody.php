@@ -55,6 +55,9 @@ use NiekNijland\ViaBOVAG\Data\SortOrder;
  */
 trait HasSharedRequestBody
 {
+    /** @var int[] */
+    private const array ENGINE_POWER_BUCKETS = [50, 75, 90, 100, 110, 125, 150, 170, 200, 250, 300, 350];
+
     /**
      * Build the shared portion of the REST API request body.
      *
@@ -137,11 +140,11 @@ trait HasSharedRequestBody
         }
 
         if ($this->enginePowerFrom !== null) {
-            $body['EnginePowerFrom'] = $this->enginePowerFrom;
+            $body['EnginePowerFrom'] = $this->normalizeEnginePowerFrom($this->enginePowerFrom);
         }
 
         if ($this->enginePowerTo !== null) {
-            $body['EnginePowerTo'] = $this->enginePowerTo;
+            $body['EnginePowerTo'] = $this->normalizeEnginePowerTo($this->enginePowerTo);
         }
 
         if ($this->colors !== null) {
@@ -248,5 +251,29 @@ trait HasSharedRequestBody
         }
 
         return $body;
+    }
+
+    private function normalizeEnginePowerFrom(int $enginePower): string
+    {
+        foreach (self::ENGINE_POWER_BUCKETS as $bucket) {
+            if ($bucket >= $enginePower) {
+                return 'EnginePower'.$bucket;
+            }
+        }
+
+        return 'EnginePower'.self::ENGINE_POWER_BUCKETS[array_key_last(self::ENGINE_POWER_BUCKETS)];
+    }
+
+    private function normalizeEnginePowerTo(int $enginePower): string
+    {
+        for ($index = count(self::ENGINE_POWER_BUCKETS) - 1; $index >= 0; $index--) {
+            $bucket = self::ENGINE_POWER_BUCKETS[$index];
+
+            if ($bucket <= $enginePower) {
+                return 'EnginePower'.$bucket;
+            }
+        }
+
+        return 'EnginePower'.self::ENGINE_POWER_BUCKETS[0];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG\Data;
 
+use InvalidArgumentException;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedRequestBody;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
@@ -23,6 +24,7 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
      * @param  BovagWarranty[]|null  $warranties
      * @param  TransmissionType[]|null  $transmissions
      * @param  DriversLicense[]|null  $driversLicenses
+     * @param  FilterOption[]|null  $accessories
      * @param  FilterOption[]|null  $frameTypes
      */
     public function __construct(
@@ -52,6 +54,8 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?int $enginePowerTo = null,
         public ?int $engineCapacityFrom = null,
         public ?int $engineCapacityTo = null,
+        public ?int $accelerationTo = null,
+        public ?int $topSpeedFrom = null,
 
         // Vehicle characteristics
         public ?array $bodyTypes = null,
@@ -59,6 +63,7 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?TransmissionType $transmission = null,
         public ?array $colors = null,
         public ?Condition $condition = null,
+        public ?FilterOption $accessory = null,
         public ?FilterOption $frameType = null,
 
         // Location
@@ -97,9 +102,11 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?array $warranties = null,
         public ?array $transmissions = null,
         public ?array $driversLicenses = null,
+        public ?array $accessories = null,
         public ?array $frameTypes = null,
     ) {
         self::assertValidPage($page);
+        self::assertNoFrameTypeFilters($frameType, $frameTypes);
     }
 
     public function mobilityType(): MobilityType
@@ -159,14 +166,30 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
             }
         }
 
-        if ($this->frameType instanceof FilterOption) {
-            $filters[] = 'frametype-'.$this->frameType->slug;
+        $accessories = [];
+
+        if ($this->accessory instanceof FilterOption) {
+            $accessories[] = $this->accessory->slug;
         }
 
-        if ($this->frameTypes !== null) {
-            foreach ($this->frameTypes as $frameType) {
-                $filters[] = 'frametype-'.$frameType->slug;
+        if ($this->accessories !== null) {
+            foreach ($this->accessories as $accessory) {
+                $accessories[] = $accessory->slug;
             }
+        }
+
+        $accessories = array_values(array_unique($accessories));
+
+        foreach ($accessories as $accessory) {
+            $filters[] = $accessory;
+        }
+
+        if ($this->accelerationTo !== null) {
+            $filters[] = 'acceleratie-tot-en-met-'.$this->accelerationTo;
+        }
+
+        if ($this->topSpeedFrom !== null) {
+            $filters[] = 'topsnelheid-vanaf-'.$this->topSpeedFrom;
         }
 
         return $filters;
@@ -237,24 +260,42 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
             $body['DriversLicense'] = $driversLicenses;
         }
 
-        $frameTypes = [];
+        $accessories = [];
 
-        if ($this->frameType instanceof FilterOption) {
-            $frameTypes[] = $this->frameType->slug;
+        if ($this->accessory instanceof FilterOption) {
+            $accessories[] = $this->accessory->slug;
         }
 
-        if ($this->frameTypes !== null) {
-            foreach ($this->frameTypes as $frameType) {
-                $frameTypes[] = $frameType->slug;
+        if ($this->accessories !== null) {
+            foreach ($this->accessories as $accessory) {
+                $accessories[] = $accessory->slug;
             }
         }
 
-        $frameTypes = array_values(array_unique($frameTypes));
+        $accessories = array_values(array_unique($accessories));
 
-        if ($frameTypes !== []) {
-            $body['FrameType'] = $frameTypes;
+        if ($accessories !== []) {
+            $body['Accessory'] = $accessories;
+        }
+
+        if ($this->accelerationTo !== null) {
+            $body['AccelerationTo'] = $this->accelerationTo;
+        }
+
+        if ($this->topSpeedFrom !== null) {
+            $body['TopSpeedFrom'] = $this->topSpeedFrom;
         }
 
         return $body;
+    }
+
+    /**
+     * @param  FilterOption[]|null  $frameTypes
+     */
+    private static function assertNoFrameTypeFilters(?FilterOption $frameType, ?array $frameTypes): void
+    {
+        if ($frameType instanceof FilterOption || ($frameTypes !== null && $frameTypes !== [])) {
+            throw new InvalidArgumentException('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
+        }
     }
 }

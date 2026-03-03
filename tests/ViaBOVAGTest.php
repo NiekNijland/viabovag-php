@@ -11,6 +11,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+use InvalidArgumentException;
 use NiekNijland\ViaBOVAG\Data\AvailableSince;
 use NiekNijland\ViaBOVAG\Data\BicycleSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\BovagWarranty;
@@ -697,7 +698,6 @@ class ViaBOVAGTest extends TestCase
         $criteria = new MotorcycleSearchCriteria(
             transmission: TransmissionType::Manual,
             condition: Condition::New,
-            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
             driversLicense: DriversLicense::A,
             warranty: BovagWarranty::TwelveMonths,
             hasNapWeblabel: true,
@@ -709,13 +709,22 @@ class ViaBOVAGTest extends TestCase
 
         $this->assertSame(['Handgeschakeld'], $body['Transmission']);
         $this->assertSame(['A'], $body['DriversLicense']);
-        $this->assertSame(['dubbel-wieg'], $body['FrameType']);
         $this->assertSame(['Nieuw'], $body['Condition']);
         $this->assertSame(['Bovag12maanden'], $body['Warranty']);
         $this->assertTrue($body['HasNapOrBit']);
         $this->assertArrayNotHasKey('HasNapWeblabel', $body);
         $this->assertSame(['Ja'], $body['Import']);
         $this->assertSame('OneWeek', $body['AvailableSince']);
+    }
+
+    public function test_search_criteria_request_body_throws_for_motorcycle_frame_type(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
+
+        new MotorcycleSearchCriteria(
+            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
+        );
     }
 
     public function test_search_criteria_request_body_formats_import_false_as_array(): void
@@ -748,14 +757,12 @@ class ViaBOVAGTest extends TestCase
         $criteria = new MotorcycleSearchCriteria(
             transmission: TransmissionType::Manual,
             condition: Condition::New,
-            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
             driversLicense: DriversLicense::A,
             warranty: BovagWarranty::TwelveMonths,
             conditions: [Condition::Used, Condition::New],
             warranties: [BovagWarranty::Manufacturer],
             transmissions: [TransmissionType::Automatic, TransmissionType::Manual],
             driversLicenses: [DriversLicense::A2],
-            frameTypes: [new FilterOption(slug: 'trellis', label: 'Trellis')],
         );
 
         $body = $criteria->toRequestBody();
@@ -764,7 +771,35 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame(['Bovag12maanden', 'Fabrieksgarantie'], $body['Warranty']);
         $this->assertSame(['Handgeschakeld', 'Automatisch'], $body['Transmission']);
         $this->assertSame(['A', 'A2'], $body['DriversLicense']);
-        $this->assertSame(['dubbel-wieg', 'trellis'], $body['FrameType']);
+    }
+
+    public function test_search_criteria_request_body_throws_for_motorcycle_frame_types(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
+
+        new MotorcycleSearchCriteria(
+            frameTypes: [new FilterOption(slug: 'trellis', label: 'Trellis')],
+        );
+    }
+
+    public function test_search_criteria_request_body_supports_motorcycle_accessories_and_performance_filters(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
+            accessories: [
+                new FilterOption(slug: 'buddyseat', label: 'Buddyseat'),
+                new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
+            ],
+            accelerationTo: 8,
+            topSpeedFrom: 150,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['cruisecontrol', 'buddyseat'], $body['Accessory']);
+        $this->assertSame(8, $body['AccelerationTo']);
+        $this->assertSame(150, $body['TopSpeedFrom']);
     }
 
     public function test_search_criteria_request_body_supports_multi_select_transmission_for_car(): void
@@ -779,7 +814,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame(['Automatisch', 'Handgeschakeld'], $body['Transmission']);
     }
 
-    public function test_search_criteria_request_body_supports_multi_select_filter_options_for_car(): void
+    public function test_search_criteria_request_body_uses_first_specified_battery_range_for_car(): void
     {
         $criteria = new CarSearchCriteria(
             cities: [
@@ -800,7 +835,7 @@ class ViaBOVAGTest extends TestCase
 
         $this->assertSame(['amsterdam', 'utrecht'], $body['City']);
         $this->assertSame(['A', 'B'], $body['EnergyLabel']);
-        $this->assertSame(['300-400', '400-500'], $body['SpecifiedBatteryRange']);
+        $this->assertSame('300-400', $body['SpecifiedBatteryRange']);
     }
 
     public function test_search_criteria_request_body_uses_api_tokens_for_gear_cylinder_and_seat_counts(): void
@@ -840,7 +875,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame('300', $body['SpecifiedBatteryRange']);
     }
 
-    public function test_search_criteria_request_body_supports_multi_select_filter_options_for_bicycle(): void
+    public function test_search_criteria_request_body_uses_first_specified_battery_range_for_bicycle(): void
     {
         $criteria = new BicycleSearchCriteria(
             frameMaterials: [
@@ -866,7 +901,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame(['aluminium', 'carbon'], $body['FrameMaterial']);
         $this->assertSame(['schijfrem', 'velgrem'], $body['BrakeType']);
         $this->assertSame(['bosch', 'shimano'], $body['EngineBrand']);
-        $this->assertSame(['80-100', '100-120'], $body['SpecifiedBatteryRange']);
+        $this->assertSame('80-100', $body['SpecifiedBatteryRange']);
     }
 
     public function test_search_criteria_request_body_supports_multi_select_filter_options_for_camper(): void
@@ -901,6 +936,45 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame(['douche', 'toilet'], $body['SanitaryLayout']);
         $this->assertSame(['l-vormig', 'hoek'], $body['KitchenLayout']);
         $this->assertSame(['fiat', 'mercedes'], $body['CamperChassisBrand']);
+    }
+
+    public function test_search_criteria_request_body_formats_engine_power_range_as_engine_power_tokens_for_car(): void
+    {
+        $criteria = new CarSearchCriteria(
+            enginePowerFrom: 100,
+            enginePowerTo: 150,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('EnginePower100', $body['EnginePowerFrom']);
+        $this->assertSame('EnginePower150', $body['EnginePowerTo']);
+    }
+
+    public function test_search_criteria_request_body_formats_engine_power_range_as_engine_power_tokens_for_motorcycle(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            enginePowerFrom: 75,
+            enginePowerTo: 125,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('EnginePower75', $body['EnginePowerFrom']);
+        $this->assertSame('EnginePower125', $body['EnginePowerTo']);
+    }
+
+    public function test_search_criteria_request_body_rounds_engine_power_to_supported_buckets(): void
+    {
+        $criteria = new CarSearchCriteria(
+            enginePowerFrom: 116,
+            enginePowerTo: 116,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame('EnginePower125', $body['EnginePowerFrom']);
+        $this->assertSame('EnginePower110', $body['EnginePowerTo']);
     }
 
     public function test_search_criteria_request_body_car_mobility_type(): void
@@ -1890,6 +1964,12 @@ class ViaBOVAGTest extends TestCase
         $this->assertContains('range-300', array_map(fn (Listing $listing): string => $listing->id, $result->listings));
 
         $this->assertCount(1, $history);
+
+        /** @var Request $request */
+        $request = $history[0]['request'];
+        $body = json_decode((string) $request->getBody(), true);
+
+        $this->assertSame('300', $body['SpecifiedBatteryRange']);
     }
 
     public function test_search_retries_with_sanitized_colors_when_api_rejects_color_filter(): void

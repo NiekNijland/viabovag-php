@@ -296,14 +296,22 @@ readonly class CarSearchCriteria implements SearchQuery
             }
         }
 
+        $specifiedBatteryRanges = [];
+
         if ($this->specifiedBatteryRange instanceof FilterOption) {
-            $filters[] = 'opgegeven-bereik-'.$this->specifiedBatteryRange->slug;
+            $specifiedBatteryRanges[] = $this->specifiedBatteryRange->slug;
         }
 
         if ($this->specifiedBatteryRanges !== null) {
             foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
-                $filters[] = 'opgegeven-bereik-'.$specifiedBatteryRange->slug;
+                $specifiedBatteryRanges[] = $specifiedBatteryRange->slug;
             }
+        }
+
+        $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
+
+        if ($specifiedBatteryRanges !== []) {
+            $filters[] = 'opgegeven-bereik-'.$specifiedBatteryRanges[0];
         }
 
         return $filters;
@@ -507,9 +515,7 @@ readonly class CarSearchCriteria implements SearchQuery
         $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
 
         if ($specifiedBatteryRanges !== []) {
-            $body['SpecifiedBatteryRange'] = count($specifiedBatteryRanges) === 1
-                ? $specifiedBatteryRanges[0]
-                : $specifiedBatteryRanges;
+            $body['SpecifiedBatteryRange'] = $specifiedBatteryRanges[0];
         }
 
         return $body;

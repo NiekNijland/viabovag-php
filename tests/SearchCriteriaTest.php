@@ -420,7 +420,7 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('energielabel-a', $slugs);
         $this->assertContains('energielabel-b', $slugs);
         $this->assertContains('opgegeven-bereik-300-400', $slugs);
-        $this->assertContains('opgegeven-bereik-400-500', $slugs);
+        $this->assertNotContains('opgegeven-bereik-400-500', $slugs);
     }
 
     public function test_car_criteria_empty_returns_no_slugs(): void
@@ -440,25 +440,38 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('rijbewijs-a2', $slugs);
     }
 
-    public function test_motorcycle_criteria_frame_type(): void
+    public function test_motorcycle_criteria_throws_for_frame_type_filter(): void
     {
-        $criteria = new MotorcycleSearchCriteria(
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
+
+        new MotorcycleSearchCriteria(
             frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
         );
-        $slugs = $criteria->toFilterSlugs();
-
-        $this->assertContains('frametype-dubbel-wieg', $slugs);
     }
 
-    public function test_motorcycle_criteria_support_multi_select_transmission_license_and_frame_type(): void
+    public function test_motorcycle_criteria_accessory_and_performance_filters(): void
+    {
+        $criteria = new MotorcycleSearchCriteria(
+            accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
+            accessories: [new FilterOption(slug: 'buddyseat', label: 'Buddyseat')],
+            accelerationTo: 8,
+            topSpeedFrom: 150,
+        );
+
+        $slugs = $criteria->toFilterSlugs();
+
+        $this->assertContains('cruisecontrol', $slugs);
+        $this->assertContains('buddyseat', $slugs);
+        $this->assertContains('acceleratie-tot-en-met-8', $slugs);
+        $this->assertContains('topsnelheid-vanaf-150', $slugs);
+    }
+
+    public function test_motorcycle_criteria_support_multi_select_transmission_and_license(): void
     {
         $criteria = new MotorcycleSearchCriteria(
             transmissions: [TransmissionType::Manual, TransmissionType::Automatic],
             driversLicenses: [DriversLicense::A, DriversLicense::A2],
-            frameTypes: [
-                new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
-                new FilterOption(slug: 'trellis', label: 'Trellis'),
-            ],
         );
 
         $slugs = $criteria->toFilterSlugs();
@@ -467,8 +480,19 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('automatisch', $slugs);
         $this->assertContains('rijbewijs-a', $slugs);
         $this->assertContains('rijbewijs-a2', $slugs);
-        $this->assertContains('frametype-dubbel-wieg', $slugs);
-        $this->assertContains('frametype-trellis', $slugs);
+    }
+
+    public function test_motorcycle_criteria_throws_for_frame_types_filter(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
+
+        new MotorcycleSearchCriteria(
+            frameTypes: [
+                new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
+                new FilterOption(slug: 'trellis', label: 'Trellis'),
+            ],
+        );
     }
 
     public function test_motorcycle_criteria_body_types(): void
@@ -584,7 +608,7 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('motormerk-bosch', $slugs);
         $this->assertContains('motormerk-shimano', $slugs);
         $this->assertContains('opgegeven-bereik-80-100', $slugs);
-        $this->assertContains('opgegeven-bereik-100-120', $slugs);
+        $this->assertNotContains('opgegeven-bereik-100-120', $slugs);
     }
 
     public function test_bicycle_criteria_empty_returns_no_slugs(): void
