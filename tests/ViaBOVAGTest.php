@@ -11,7 +11,6 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use InvalidArgumentException;
 use NiekNijland\ViaBOVAG\Data\AvailableSince;
 use NiekNijland\ViaBOVAG\Data\BicycleSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\BovagWarranty;
@@ -60,14 +59,6 @@ class ViaBOVAGTest extends TestCase
         $httpClient = new Client(['handler' => $handlerStack]);
 
         return new ViaBOVAG(httpClient: $httpClient, cache: $cache);
-    }
-
-    private function createClientWithRetries(MockHandler $mock, int $maxRetries): ViaBOVAG
-    {
-        $handlerStack = HandlerStack::create($mock);
-        $httpClient = new Client(['handler' => $handlerStack]);
-
-        return new ViaBOVAG(httpClient: $httpClient, maxRetries: $maxRetries);
     }
 
     /**
@@ -594,7 +585,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertNotEmpty($detail->id);
     }
 
-    // --- SearchCriteria Filter Slugs (kept for backward compatibility) ---
+    // --- SearchCriteria Filter Slugs ---
 
     public function test_search_criteria_filter_slugs_brand_and_model(): void
     {
@@ -696,13 +687,13 @@ class ViaBOVAGTest extends TestCase
     public function test_search_criteria_request_body_uses_array_based_api_filters(): void
     {
         $criteria = new MotorcycleSearchCriteria(
-            transmission: TransmissionType::Manual,
-            condition: Condition::New,
-            driversLicense: DriversLicense::A,
-            warranty: BovagWarranty::TwelveMonths,
             hasNapWeblabel: true,
             isImported: true,
             availableSince: AvailableSince::OneWeek,
+            conditions: [Condition::New],
+            warranties: [BovagWarranty::TwelveMonths],
+            transmissions: [TransmissionType::Manual],
+            driversLicenses: [DriversLicense::A],
         );
 
         $body = $criteria->toRequestBody();
@@ -715,16 +706,6 @@ class ViaBOVAGTest extends TestCase
         $this->assertArrayNotHasKey('HasNapWeblabel', $body);
         $this->assertSame(['Ja'], $body['Import']);
         $this->assertSame('OneWeek', $body['AvailableSince']);
-    }
-
-    public function test_search_criteria_request_body_throws_for_motorcycle_frame_type(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
-
-        new MotorcycleSearchCriteria(
-            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
-        );
     }
 
     public function test_search_criteria_request_body_formats_import_false_as_array(): void
@@ -755,14 +736,10 @@ class ViaBOVAGTest extends TestCase
     public function test_search_criteria_request_body_supports_multi_select_filters(): void
     {
         $criteria = new MotorcycleSearchCriteria(
-            transmission: TransmissionType::Manual,
-            condition: Condition::New,
-            driversLicense: DriversLicense::A,
-            warranty: BovagWarranty::TwelveMonths,
-            conditions: [Condition::Used, Condition::New],
-            warranties: [BovagWarranty::Manufacturer],
-            transmissions: [TransmissionType::Automatic, TransmissionType::Manual],
-            driversLicenses: [DriversLicense::A2],
+            conditions: [Condition::New, Condition::Used],
+            warranties: [BovagWarranty::TwelveMonths, BovagWarranty::Manufacturer],
+            transmissions: [TransmissionType::Manual, TransmissionType::Automatic],
+            driversLicenses: [DriversLicense::A, DriversLicense::A2],
         );
 
         $body = $criteria->toRequestBody();
@@ -773,23 +750,13 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame(['A', 'A2'], $body['DriversLicense']);
     }
 
-    public function test_search_criteria_request_body_throws_for_motorcycle_frame_types(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
-
-        new MotorcycleSearchCriteria(
-            frameTypes: [new FilterOption(slug: 'trellis', label: 'Trellis')],
-        );
-    }
-
     public function test_search_criteria_request_body_supports_motorcycle_accessories_and_performance_filters(): void
     {
         $criteria = new MotorcycleSearchCriteria(
             accelerationTo: 8,
             topSpeedFrom: 150,
-            accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
             accessories: [
+                new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
                 new FilterOption(slug: 'buddyseat', label: 'Buddyseat'),
                 new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
             ],
@@ -805,8 +772,7 @@ class ViaBOVAGTest extends TestCase
     public function test_search_criteria_request_body_supports_multi_select_transmission_for_car(): void
     {
         $criteria = new CarSearchCriteria(
-            transmission: TransmissionType::Automatic,
-            transmissions: [TransmissionType::Manual],
+            transmissions: [TransmissionType::Automatic, TransmissionType::Manual],
         );
 
         $body = $criteria->toRequestBody();
@@ -814,20 +780,17 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame(['Automatisch', 'Handgeschakeld'], $body['Transmission']);
     }
 
-    public function test_search_criteria_request_body_uses_first_specified_battery_range_for_car(): void
+    public function test_search_criteria_request_body_uses_specified_battery_range_for_car(): void
     {
         $criteria = new CarSearchCriteria(
             cities: [
                 new FilterOption(slug: 'amsterdam', label: 'Amsterdam'),
                 new FilterOption(slug: 'utrecht', label: 'Utrecht'),
             ],
+            specifiedBatteryRange: new FilterOption(slug: '300-400', label: '300-400 km'),
             energyLabels: [
                 new FilterOption(slug: 'A', label: 'A'),
                 new FilterOption(slug: 'B', label: 'B'),
-            ],
-            specifiedBatteryRanges: [
-                new FilterOption(slug: '300-400', label: '300-400 km'),
-                new FilterOption(slug: '400-500', label: '400-500 km'),
             ],
         );
 
@@ -856,7 +819,7 @@ class ViaBOVAGTest extends TestCase
     public function test_search_criteria_request_body_formats_single_energy_label_as_array(): void
     {
         $criteria = new CarSearchCriteria(
-            energyLabel: new FilterOption(slug: 'A', label: 'A'),
+            energyLabels: [new FilterOption(slug: 'A', label: 'A')],
         );
 
         $body = $criteria->toRequestBody();
@@ -875,7 +838,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame('300', $body['SpecifiedBatteryRange']);
     }
 
-    public function test_search_criteria_request_body_uses_first_specified_battery_range_for_bicycle(): void
+    public function test_search_criteria_request_body_uses_specified_battery_range_for_bicycle(): void
     {
         $criteria = new BicycleSearchCriteria(
             frameMaterials: [
@@ -890,10 +853,7 @@ class ViaBOVAGTest extends TestCase
                 new FilterOption(slug: 'bosch', label: 'Bosch'),
                 new FilterOption(slug: 'shimano', label: 'Shimano'),
             ],
-            specifiedBatteryRanges: [
-                new FilterOption(slug: '80-100', label: '80-100 km'),
-                new FilterOption(slug: '100-120', label: '100-120 km'),
-            ],
+            specifiedBatteryRange: new FilterOption(slug: '80-100', label: '80-100 km'),
         );
 
         $body = $criteria->toRequestBody();
@@ -1289,71 +1249,28 @@ class ViaBOVAGTest extends TestCase
         $this->assertIsBool($firstSpec->hasValue);
     }
 
-    // --- Transient Error Retry (REST API) ---
+    // --- No Automatic Retry ---
 
-    public function test_retries_on_429_response(): void
+    public function test_search_does_not_retry_on_429_response(): void
     {
         $searchJson = $this->fixture('search-results-api.json');
 
+        $history = [];
         $mock = new MockHandler([
-            // First attempt: 429 Too Many Requests
             new Response(429, [], ''),
-            // Retry: succeeds
             new Response(200, [], $searchJson),
         ]);
 
-        $client = $this->createClientWithRetries($mock, maxRetries: 1);
-        $result = $client->search(new MotorcycleSearchCriteria);
+        $client = $this->createClientWithHistory($mock, $history);
 
-        $this->assertCount(24, $result->listings);
-    }
+        try {
+            $client->search(new MotorcycleSearchCriteria);
+            $this->fail('Expected ViaBOVAGException was not thrown');
+        } catch (ViaBOVAGException $viabovagException) {
+            $this->assertStringContainsString('HTTP 429', $viabovagException->getMessage());
+        }
 
-    public function test_retries_on_503_response(): void
-    {
-        $searchJson = $this->fixture('search-results-api.json');
-
-        $mock = new MockHandler([
-            // First attempt: 503 Service Unavailable
-            new Response(503, [], ''),
-            // Retry: succeeds
-            new Response(200, [], $searchJson),
-        ]);
-
-        $client = $this->createClientWithRetries($mock, maxRetries: 1);
-        $result = $client->search(new MotorcycleSearchCriteria);
-
-        $this->assertCount(24, $result->listings);
-    }
-
-    public function test_throws_after_exhausting_transient_retries(): void
-    {
-        $mock = new MockHandler([
-            new Response(429, [], ''),
-            new Response(429, [], ''),
-        ]);
-
-        // maxRetries: 0 means only the initial attempt + 0 retries
-        $client = $this->createClientWithRetries($mock, maxRetries: 0);
-
-        $this->expectException(ViaBOVAGException::class);
-        $this->expectExceptionMessage('HTTP 429');
-
-        $client->search(new MotorcycleSearchCriteria);
-    }
-
-    public function test_does_not_retry_non_transient_errors(): void
-    {
-        $mock = new MockHandler([
-            // 500 is not in the retryable list
-            new Response(500, [], 'Internal Server Error'),
-        ]);
-
-        $client = $this->createClientWithRetries($mock, maxRetries: 2);
-
-        $this->expectException(ViaBOVAGException::class);
-        $this->expectExceptionMessage('HTTP 500');
-
-        $client->search(new MotorcycleSearchCriteria);
+        $this->assertCount(1, $history);
     }
 
     // --- searchAll (pagination iterator) ---
@@ -1412,7 +1329,7 @@ class ViaBOVAGTest extends TestCase
             new Response(500, [], 'Internal Server Error'),
         ]);
 
-        $client = $this->createClientWithRetries($mock, maxRetries: 0);
+        $client = $this->createClient($mock);
         $generator = $client->searchAll(new MotorcycleSearchCriteria);
 
         // First page yields 24 listings successfully
@@ -1936,7 +1853,7 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame('nap-no', $result->listings[1]->id);
     }
 
-    public function test_search_uses_single_server_request_for_specified_battery_range_multi_select(): void
+    public function test_search_uses_single_server_request_for_specified_battery_range(): void
     {
         $range300Json = $this->buildSearchJsonFromListings([
             ['id' => 'range-300'],
@@ -1954,10 +1871,7 @@ class ViaBOVAGTest extends TestCase
 
         $client = $this->createClientWithHistory($mock, $history);
         $result = $client->search(new CarSearchCriteria(
-            specifiedBatteryRanges: [
-                new FilterOption(slug: '300', label: '300 km'),
-                new FilterOption(slug: '400', label: '400 km'),
-            ],
+            specifiedBatteryRange: new FilterOption(slug: '300', label: '300 km'),
         ));
 
         $this->assertCount(1, $result->listings);
@@ -1972,22 +1886,8 @@ class ViaBOVAGTest extends TestCase
         $this->assertSame('300', $body['SpecifiedBatteryRange']);
     }
 
-    public function test_search_retries_with_sanitized_colors_when_api_rejects_color_filter(): void
+    public function test_search_does_not_retry_with_sanitized_colors_when_api_rejects_color_filter(): void
     {
-        $colorFacetsJson = json_encode([
-            'count' => 1,
-            'facets' => [
-                [
-                    'name' => 'Color',
-                    'label' => 'Kleur',
-                    'options' => [
-                        ['name' => 'Zwart', 'label' => 'Zwart', 'count' => 1],
-                    ],
-                    'optionCategories' => [],
-                ],
-            ],
-        ]);
-
         $searchJson = $this->buildSearchJsonFromListings([
             [
                 'id' => 'black-bike',
@@ -1998,51 +1898,19 @@ class ViaBOVAGTest extends TestCase
         $history = [];
         $mock = new MockHandler([
             new Response(500, [], ''),
-            new Response(200, [], $colorFacetsJson),
             new Response(200, [], $searchJson),
         ]);
 
         $client = $this->createClientWithHistory($mock, $history);
-        $result = $client->search(new MotorcycleSearchCriteria(colors: ['Roze', 'Zwart']));
 
-        $this->assertCount(1, $result->listings);
-        $this->assertSame('black-bike', $result->listings[0]->id);
+        try {
+            $client->search(new MotorcycleSearchCriteria(colors: ['Roze', 'Zwart']));
+            $this->fail('Expected ViaBOVAGException was not thrown');
+        } catch (ViaBOVAGException $viabovagException) {
+            $this->assertStringContainsString('HTTP 500', $viabovagException->getMessage());
+        }
 
-        /** @var Request $retriedSearchRequest */
-        $retriedSearchRequest = $history[2]['request'];
-        $retriedBody = json_decode((string) $retriedSearchRequest->getBody(), true);
-
-        $this->assertSame(['Zwart'], $retriedBody['Color']);
-    }
-
-    public function test_search_returns_empty_when_all_requested_colors_are_invalid(): void
-    {
-        $colorFacetsJson = json_encode([
-            'count' => 1,
-            'facets' => [
-                [
-                    'name' => 'Color',
-                    'label' => 'Kleur',
-                    'options' => [
-                        ['name' => 'Zwart', 'label' => 'Zwart', 'count' => 1],
-                    ],
-                    'optionCategories' => [],
-                ],
-            ],
-        ]);
-
-        $history = [];
-        $mock = new MockHandler([
-            new Response(500, [], ''),
-            new Response(200, [], $colorFacetsJson),
-        ]);
-
-        $client = $this->createClientWithHistory($mock, $history);
-        $result = $client->search(new MotorcycleSearchCriteria(colors: ['Roze']));
-
-        $this->assertSame([], $result->listings);
-        $this->assertSame(0, $result->totalCount);
-        $this->assertCount(2, $history);
+        $this->assertCount(1, $history);
     }
 
     public function test_search_uses_server_results_for_not_imported_filter(): void

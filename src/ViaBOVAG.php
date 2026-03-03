@@ -14,6 +14,7 @@ use NiekNijland\ViaBOVAG\Data\CamperSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
 use NiekNijland\ViaBOVAG\Data\FacetName;
 use NiekNijland\ViaBOVAG\Data\FilterOption;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
 use NiekNijland\ViaBOVAG\Data\Listing;
 use NiekNijland\ViaBOVAG\Data\ListingDetail;
 use NiekNijland\ViaBOVAG\Data\MobilityType;
@@ -42,9 +43,6 @@ class ViaBOVAG implements ViaBOVAGInterface
 
     private const string ALL_BRANDS_CATEGORY_LABEL = 'Alle merken';
 
-    /** @var int[] */
-    private const array RETRYABLE_STATUS_CODES = [429, 503];
-
     private ?string $buildId = null;
 
     private readonly JsonParser $parser;
@@ -53,7 +51,6 @@ class ViaBOVAG implements ViaBOVAGInterface
         private readonly ClientInterface $httpClient = new Client,
         private readonly ?CacheInterface $cache = null,
         private readonly int $cacheTtl = 3600,
-        private readonly int $maxRetries = 2,
     ) {
         $this->parser = new JsonParser;
     }
@@ -66,17 +63,10 @@ class ViaBOVAG implements ViaBOVAGInterface
             throw new ViaBOVAGException('Search page must be greater than or equal to 1.');
         }
 
-        $requestBody = $query->toRequestBody();
-
-        $json = $this->postSearchJsonWithColorFallback($requestBody);
-
-        if ($json === null) {
-            return new SearchResult(
-                listings: [],
-                totalCount: 0,
-                currentPage: $page,
-            );
-        }
+        $json = $this->postJson(
+            self::BASE_URL.self::SEARCH_ENDPOINT,
+            $query->toRequestBody(),
+        );
 
         return $this->parser->parseSearchResults($json, $page);
     }
@@ -141,15 +131,14 @@ class ViaBOVAG implements ViaBOVAGInterface
     public function getDetailBySlug(string $slug, MobilityType $mobilityType): ListingDetail
     {
         $url = $this->buildDetailUrl($slug, $mobilityType);
-        $json = $this->fetchJsonWithRetry($url);
+        $json = $this->fetchJsonWithBuildIdRefresh($url);
 
         return $this->parser->parseDetail($json);
     }
 
     public function resetSession(): void
     {
-        $this->buildId = null;
-        $this->cache?->delete(self::CACHE_KEY);
+        $this->invalidateBuildId();
     }
 
     private function createEmptyCriteria(
@@ -157,11 +146,16 @@ class ViaBOVAG implements ViaBOVAGInterface
         ?Brand $brand = null,
         ?Model $model = null,
     ): SearchQuery {
+        $shared = new SharedSearchFilters(
+            brand: $brand,
+            model: $model,
+        );
+
         return match ($mobilityType) {
-            MobilityType::Motorcycle => new MotorcycleSearchCriteria(brand: $brand, model: $model),
-            MobilityType::Car => new CarSearchCriteria(brand: $brand, model: $model),
-            MobilityType::Bicycle => new BicycleSearchCriteria(brand: $brand, model: $model),
-            MobilityType::Camper => new CamperSearchCriteria(brand: $brand, model: $model),
+            MobilityType::Motorcycle => MotorcycleSearchCriteria::fromFilters(shared: $shared),
+            MobilityType::Car => CarSearchCriteria::fromFilters(shared: $shared),
+            MobilityType::Bicycle => BicycleSearchCriteria::fromFilters(shared: $shared),
+            MobilityType::Camper => CamperSearchCriteria::fromFilters(shared: $shared),
         };
     }
 
@@ -170,7 +164,7 @@ class ViaBOVAG implements ViaBOVAGInterface
      */
     private function fetchFacets(SearchQuery $query): array
     {
-        $json = $this->postJsonWithTransientRetry(
+        $json = $this->postJson(
             self::BASE_URL.self::FACETS_ENDPOINT,
             $query->toRequestBody(),
         );
@@ -287,34 +281,6 @@ class ViaBOVAG implements ViaBOVAGInterface
     // --- REST API (search + facets) ---
 
     /**
-     * POST JSON to a REST API endpoint with retry logic for transient errors.
-     *
-     * @param  array<string, mixed>  $body
-     */
-    private function postJsonWithTransientRetry(string $url, array $body): string
-    {
-        $lastException = null;
-
-        for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
-            try {
-                return $this->postJson($url, $body);
-            } catch (ViaBOVAGException $exception) {
-                if (! $this->isTransientError($exception)) {
-                    throw $exception;
-                }
-
-                $lastException = $exception;
-
-                if ($attempt < $this->maxRetries) {
-                    usleep(500_000 * 2 ** $attempt);
-                }
-            }
-        }
-
-        throw $lastException ?? new ViaBOVAGException('Request failed after '.($this->maxRetries + 1).' attempts.');
-    }
-
-    /**
      * POST JSON to a REST API endpoint and return the response body.
      *
      * @param  array<string, mixed>  $body
@@ -344,98 +310,6 @@ class ViaBOVAG implements ViaBOVAGInterface
         return (string) $response->getBody();
     }
 
-    /**
-     * Post search request, retrying once with sanitized colors when needed.
-     *
-     * Returns null when no requested colors are valid for the current query.
-     *
-     * @param  array<string, mixed>  $requestBody
-     */
-    private function postSearchJsonWithColorFallback(array $requestBody): ?string
-    {
-        try {
-            return $this->postJsonWithTransientRetry(
-                self::BASE_URL.self::SEARCH_ENDPOINT,
-                $requestBody,
-            );
-        } catch (ViaBOVAGException $viabovagException) {
-            if ($viabovagException->getCode() !== 500 || ! isset($requestBody['Color'])) {
-                throw $viabovagException;
-            }
-
-            $sanitizedBody = $this->sanitizeColorFilter($requestBody);
-
-            if ($sanitizedBody === null) {
-                return null;
-            }
-
-            if ($sanitizedBody === $requestBody) {
-                throw $viabovagException;
-            }
-
-            return $this->postJsonWithTransientRetry(
-                self::BASE_URL.self::SEARCH_ENDPOINT,
-                $sanitizedBody,
-            );
-        }
-    }
-
-    /**
-     * Sanitize color filters against available facet options.
-     *
-     * Returns null when no requested colors are valid.
-     *
-     * @param  array<string, mixed>  $requestBody
-     * @return array<string, mixed>|null
-     */
-    private function sanitizeColorFilter(array $requestBody): ?array
-    {
-        $requestedColors = $requestBody['Color'] ?? null;
-
-        if (! is_array($requestedColors) || $requestedColors === []) {
-            return $requestBody;
-        }
-
-        $facetsBody = $requestBody;
-        unset($facetsBody['Color']);
-
-        $facetsJson = $this->postJsonWithTransientRetry(
-            self::BASE_URL.self::FACETS_ENDPOINT,
-            $facetsBody,
-        );
-
-        $facets = $this->parser->parseSearchFacets($facetsJson);
-        $options = $this->extractFilterOptionsFromFacets($facets, FacetName::Color->value);
-
-        $allowed = [];
-        foreach ($options as $option) {
-            $allowed[strtolower($option->label)] = $option->label;
-            $allowed[strtolower($option->slug)] = $option->label;
-        }
-
-        $validColors = [];
-        foreach ($requestedColors as $requestedColor) {
-            if (! is_string($requestedColor)) {
-                continue;
-            }
-
-            $key = strtolower($requestedColor);
-            if (isset($allowed[$key])) {
-                $validColors[] = $allowed[$key];
-            }
-        }
-
-        $validColors = array_values(array_unique($validColors));
-
-        if ($validColors === []) {
-            return null;
-        }
-
-        $requestBody['Color'] = $validColors;
-
-        return $requestBody;
-    }
-
     // --- _next/data (detail pages only) ---
 
     private function buildDetailUrl(string $slug, MobilityType $mobilityType): string
@@ -448,72 +322,6 @@ class ViaBOVAG implements ViaBOVAGInterface
         ];
 
         return self::BASE_URL.'/_next/data/'.$buildId.'/nl-NL/vdp.json?'.http_build_query($params);
-    }
-
-    /**
-     * Fetch JSON with stale build ID retry logic.
-     * If we get a 404, invalidate the build ID, re-fetch it, and retry once.
-     */
-    private function fetchJsonWithRetry(string $url): string
-    {
-        try {
-            return $this->fetchJsonWithTransientRetry($url);
-        } catch (NotFoundException $notFoundException) {
-            // Stale build ID — invalidate and retry
-            $oldBuildId = $this->buildId;
-
-            if ($oldBuildId === null) {
-                throw $notFoundException;
-            }
-
-            $this->buildId = null;
-            $this->cache?->delete(self::CACHE_KEY);
-
-            $newBuildId = $this->ensureBuildId();
-
-            if ($newBuildId === $oldBuildId) {
-                throw $notFoundException;
-            }
-
-            // Replace old build ID in URL
-            $url = str_replace($oldBuildId, $newBuildId, $url);
-
-            return $this->fetchJsonWithTransientRetry($url);
-        }
-    }
-
-    /**
-     * Fetch JSON with retry logic for transient HTTP errors (429, 503).
-     * Retries up to $maxRetries times with exponential backoff.
-     */
-    private function fetchJsonWithTransientRetry(string $url): string
-    {
-        $lastException = null;
-
-        for ($attempt = 0; $attempt <= $this->maxRetries; $attempt++) {
-            try {
-                return $this->fetchJson($url);
-            } catch (ViaBOVAGException $exception) {
-                // Let 404s bubble up immediately — handled by stale build ID retry
-                if ($exception instanceof NotFoundException) {
-                    throw $exception;
-                }
-
-                // Only retry on transient status codes
-                if (! $this->isTransientError($exception)) {
-                    throw $exception;
-                }
-
-                $lastException = $exception;
-
-                // Exponential backoff: 500ms, 1000ms, ...
-                if ($attempt < $this->maxRetries) {
-                    usleep(500_000 * 2 ** $attempt);
-                }
-            }
-        }
-
-        throw $lastException ?? new ViaBOVAGException('Request failed after '.($this->maxRetries + 1).' attempts.');
     }
 
     private function fetchJson(string $url): string
@@ -541,14 +349,34 @@ class ViaBOVAG implements ViaBOVAGInterface
         return (string) $response->getBody();
     }
 
+    private function fetchJsonWithBuildIdRefresh(string $url): string
+    {
+        try {
+            return $this->fetchJson($url);
+        } catch (NotFoundException $notFoundException) {
+            $previousBuildId = $this->buildId;
+
+            if ($previousBuildId === null) {
+                throw $notFoundException;
+            }
+
+            $this->invalidateBuildId();
+            $nextBuildId = $this->ensureBuildId();
+
+            if ($nextBuildId === $previousBuildId) {
+                throw $notFoundException;
+            }
+
+            return $this->fetchJson(str_replace($previousBuildId, $nextBuildId, $url));
+        }
+    }
+
     // --- Build ID (shared, used only for detail pages) ---
 
-    /**
-     * Check if an exception represents a transient HTTP error that should be retried.
-     */
-    private function isTransientError(ViaBOVAGException $exception): bool
+    private function invalidateBuildId(): void
     {
-        return in_array($exception->getCode(), self::RETRYABLE_STATUS_CODES, true);
+        $this->buildId = null;
+        $this->cache?->delete(self::CACHE_KEY);
     }
 
     private function ensureBuildId(): string

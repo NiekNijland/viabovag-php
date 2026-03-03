@@ -7,6 +7,8 @@ namespace NiekNijland\ViaBOVAG\Data;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedRequestBody;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
+use NiekNijland\ViaBOVAG\Data\Filters\CamperSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
 
 /** @phpstan-consistent-constructor */
 readonly class CamperSearchCriteria implements SearchQuery
@@ -55,9 +57,7 @@ readonly class CamperSearchCriteria implements SearchQuery
         public ?int $engineCapacityTo = null,
 
         // Vehicle characteristics
-        public ?TransmissionType $transmission = null,
         public ?array $colors = null,
-        public ?Condition $condition = null,
 
         // Location
         public ?string $postalCode = null,
@@ -65,21 +65,15 @@ readonly class CamperSearchCriteria implements SearchQuery
 
         // Camper-specific
         public ?int $bedCount = null,
-        public ?FilterOption $bedLayout = null,
         public ?array $bedLayouts = null,
-        public ?FilterOption $seatingLayout = null,
         public ?array $seatingLayouts = null,
-        public ?FilterOption $sanitaryLayout = null,
         public ?array $sanitaryLayouts = null,
-        public ?FilterOption $kitchenLayout = null,
         public ?array $kitchenLayouts = null,
         public ?int $interiorHeightFrom = null,
-        public ?FilterOption $camperChassisBrand = null,
         public ?array $camperChassisBrands = null,
         public ?int $maximumMassTo = null,
 
         // BOVAG certifications
-        public ?BovagWarranty $warranty = null,
         public ?bool $fullyServiced = null,
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
@@ -110,6 +104,59 @@ readonly class CamperSearchCriteria implements SearchQuery
         self::assertValidPage($page);
     }
 
+    public static function fromFilters(
+        SharedSearchFilters $shared = new SharedSearchFilters,
+        CamperSearchFilters $filters = new CamperSearchFilters,
+        int $page = 1,
+    ): self {
+        return new self(
+            brand: $shared->brand,
+            model: $shared->model,
+            modelKeywords: $shared->modelKeywords,
+            priceFrom: $shared->priceFrom,
+            priceTo: $shared->priceTo,
+            leasePriceFrom: $shared->leasePriceFrom,
+            leasePriceTo: $shared->leasePriceTo,
+            yearFrom: $shared->yearFrom,
+            yearTo: $shared->yearTo,
+            modelYearFrom: $shared->modelYearFrom,
+            modelYearTo: $shared->modelYearTo,
+            mileageFrom: $shared->mileageFrom,
+            mileageTo: $shared->mileageTo,
+            enginePowerFrom: $shared->enginePowerFrom,
+            enginePowerTo: $shared->enginePowerTo,
+            engineCapacityFrom: $filters->engineCapacityFrom,
+            engineCapacityTo: $filters->engineCapacityTo,
+            colors: $shared->colors,
+            postalCode: $shared->postalCode,
+            distance: $shared->distance,
+            bedCount: $filters->bedCount,
+            bedLayouts: $filters->bedLayouts,
+            seatingLayouts: $filters->seatingLayouts,
+            sanitaryLayouts: $filters->sanitaryLayouts,
+            kitchenLayouts: $filters->kitchenLayouts,
+            interiorHeightFrom: $filters->interiorHeightFrom,
+            camperChassisBrands: $filters->camperChassisBrands,
+            maximumMassTo: $filters->maximumMassTo,
+            fullyServiced: $shared->fullyServiced,
+            hasBovagChecklist: $shared->hasBovagChecklist,
+            hasBovagMaintenanceFree: $shared->hasBovagMaintenanceFree,
+            hasBovagImportOdometerCheck: $shared->hasBovagImportOdometerCheck,
+            servicedOnDelivery: $shared->servicedOnDelivery,
+            hasNapWeblabel: $shared->hasNapWeblabel,
+            vatDeductible: $shared->vatDeductible,
+            isFinanceable: $shared->isFinanceable,
+            isImported: $shared->isImported,
+            keywords: $shared->keywords,
+            availableSince: $shared->availableSince,
+            sortOrder: $shared->sortOrder,
+            page: $page,
+            conditions: $shared->conditions,
+            warranties: $shared->warranties,
+            transmissions: $filters->transmissions,
+        );
+    }
+
     public function mobilityType(): MobilityType
     {
         return MobilityType::Camper;
@@ -135,14 +182,8 @@ readonly class CamperSearchCriteria implements SearchQuery
             $filters[] = 'motorinhoud-cc-tot-en-met-'.$this->engineCapacityTo;
         }
 
-        if ($this->transmission instanceof TransmissionType) {
-            $filters[] = $this->transmission->slug();
-        }
-
-        if ($this->transmissions !== null) {
-            foreach ($this->transmissions as $transmission) {
-                $filters[] = $transmission->slug();
-            }
+        foreach ($this->collectTransmissionSlugs() as $transmissionSlug) {
+            $filters[] = $transmissionSlug;
         }
 
         // Camper-specific filters
@@ -150,58 +191,28 @@ readonly class CamperSearchCriteria implements SearchQuery
             $filters[] = 'slaapplaatsen-'.$this->bedCount;
         }
 
-        if ($this->bedLayout instanceof FilterOption) {
-            $filters[] = 'bedindeling-'.$this->bedLayout->slug;
+        foreach ($this->collectBedLayoutSlugs() as $bedLayoutSlug) {
+            $filters[] = 'bedindeling-'.$bedLayoutSlug;
         }
 
-        if ($this->bedLayouts !== null) {
-            foreach ($this->bedLayouts as $bedLayout) {
-                $filters[] = 'bedindeling-'.$bedLayout->slug;
-            }
+        foreach ($this->collectSeatingLayoutSlugs() as $seatingLayoutSlug) {
+            $filters[] = 'zitindeling-'.$seatingLayoutSlug;
         }
 
-        if ($this->seatingLayout instanceof FilterOption) {
-            $filters[] = 'zitindeling-'.$this->seatingLayout->slug;
+        foreach ($this->collectSanitaryLayoutSlugs() as $sanitaryLayoutSlug) {
+            $filters[] = 'sanitaire-indeling-'.$sanitaryLayoutSlug;
         }
 
-        if ($this->seatingLayouts !== null) {
-            foreach ($this->seatingLayouts as $seatingLayout) {
-                $filters[] = 'zitindeling-'.$seatingLayout->slug;
-            }
-        }
-
-        if ($this->sanitaryLayout instanceof FilterOption) {
-            $filters[] = 'sanitaire-indeling-'.$this->sanitaryLayout->slug;
-        }
-
-        if ($this->sanitaryLayouts !== null) {
-            foreach ($this->sanitaryLayouts as $sanitaryLayout) {
-                $filters[] = 'sanitaire-indeling-'.$sanitaryLayout->slug;
-            }
-        }
-
-        if ($this->kitchenLayout instanceof FilterOption) {
-            $filters[] = 'keukenindeling-'.$this->kitchenLayout->slug;
-        }
-
-        if ($this->kitchenLayouts !== null) {
-            foreach ($this->kitchenLayouts as $kitchenLayout) {
-                $filters[] = 'keukenindeling-'.$kitchenLayout->slug;
-            }
+        foreach ($this->collectKitchenLayoutSlugs() as $kitchenLayoutSlug) {
+            $filters[] = 'keukenindeling-'.$kitchenLayoutSlug;
         }
 
         if ($this->interiorHeightFrom !== null) {
             $filters[] = 'stahoogte-vanaf-'.$this->interiorHeightFrom;
         }
 
-        if ($this->camperChassisBrand instanceof FilterOption) {
-            $filters[] = 'chassis-merk-'.$this->camperChassisBrand->slug;
-        }
-
-        if ($this->camperChassisBrands !== null) {
-            foreach ($this->camperChassisBrands as $camperChassisBrand) {
-                $filters[] = 'chassis-merk-'.$camperChassisBrand->slug;
-            }
+        foreach ($this->collectCamperChassisBrandSlugs() as $camperChassisBrandSlug) {
+            $filters[] = 'chassis-merk-'.$camperChassisBrandSlug;
         }
 
         if ($this->maximumMassTo !== null) {
@@ -226,19 +237,7 @@ readonly class CamperSearchCriteria implements SearchQuery
             $body['EngineCapacityTo'] = $this->engineCapacityTo;
         }
 
-        $transmissions = [];
-
-        if ($this->transmission instanceof TransmissionType) {
-            $transmissions[] = $this->transmission->value;
-        }
-
-        if ($this->transmissions !== null) {
-            foreach ($this->transmissions as $transmission) {
-                $transmissions[] = $transmission->value;
-            }
-        }
-
-        $transmissions = array_values(array_unique($transmissions));
+        $transmissions = $this->collectTransmissionValues();
 
         if ($transmissions !== []) {
             $body['Transmission'] = $transmissions;
@@ -249,73 +248,25 @@ readonly class CamperSearchCriteria implements SearchQuery
             $body['BedCount'] = $this->bedCount;
         }
 
-        $bedLayouts = [];
-
-        if ($this->bedLayout instanceof FilterOption) {
-            $bedLayouts[] = $this->bedLayout->slug;
-        }
-
-        if ($this->bedLayouts !== null) {
-            foreach ($this->bedLayouts as $bedLayout) {
-                $bedLayouts[] = $bedLayout->slug;
-            }
-        }
-
-        $bedLayouts = array_values(array_unique($bedLayouts));
+        $bedLayouts = $this->collectBedLayoutSlugs();
 
         if ($bedLayouts !== []) {
             $body['BedLayout'] = count($bedLayouts) === 1 ? $bedLayouts[0] : $bedLayouts;
         }
 
-        $seatingLayouts = [];
-
-        if ($this->seatingLayout instanceof FilterOption) {
-            $seatingLayouts[] = $this->seatingLayout->slug;
-        }
-
-        if ($this->seatingLayouts !== null) {
-            foreach ($this->seatingLayouts as $seatingLayout) {
-                $seatingLayouts[] = $seatingLayout->slug;
-            }
-        }
-
-        $seatingLayouts = array_values(array_unique($seatingLayouts));
+        $seatingLayouts = $this->collectSeatingLayoutSlugs();
 
         if ($seatingLayouts !== []) {
             $body['SeatingLayout'] = count($seatingLayouts) === 1 ? $seatingLayouts[0] : $seatingLayouts;
         }
 
-        $sanitaryLayouts = [];
-
-        if ($this->sanitaryLayout instanceof FilterOption) {
-            $sanitaryLayouts[] = $this->sanitaryLayout->slug;
-        }
-
-        if ($this->sanitaryLayouts !== null) {
-            foreach ($this->sanitaryLayouts as $sanitaryLayout) {
-                $sanitaryLayouts[] = $sanitaryLayout->slug;
-            }
-        }
-
-        $sanitaryLayouts = array_values(array_unique($sanitaryLayouts));
+        $sanitaryLayouts = $this->collectSanitaryLayoutSlugs();
 
         if ($sanitaryLayouts !== []) {
             $body['SanitaryLayout'] = count($sanitaryLayouts) === 1 ? $sanitaryLayouts[0] : $sanitaryLayouts;
         }
 
-        $kitchenLayouts = [];
-
-        if ($this->kitchenLayout instanceof FilterOption) {
-            $kitchenLayouts[] = $this->kitchenLayout->slug;
-        }
-
-        if ($this->kitchenLayouts !== null) {
-            foreach ($this->kitchenLayouts as $kitchenLayout) {
-                $kitchenLayouts[] = $kitchenLayout->slug;
-            }
-        }
-
-        $kitchenLayouts = array_values(array_unique($kitchenLayouts));
+        $kitchenLayouts = $this->collectKitchenLayoutSlugs();
 
         if ($kitchenLayouts !== []) {
             $body['KitchenLayout'] = count($kitchenLayouts) === 1 ? $kitchenLayouts[0] : $kitchenLayouts;
@@ -325,19 +276,7 @@ readonly class CamperSearchCriteria implements SearchQuery
             $body['InteriorHeightFrom'] = $this->interiorHeightFrom;
         }
 
-        $camperChassisBrands = [];
-
-        if ($this->camperChassisBrand instanceof FilterOption) {
-            $camperChassisBrands[] = $this->camperChassisBrand->slug;
-        }
-
-        if ($this->camperChassisBrands !== null) {
-            foreach ($this->camperChassisBrands as $camperChassisBrand) {
-                $camperChassisBrands[] = $camperChassisBrand->slug;
-            }
-        }
-
-        $camperChassisBrands = array_values(array_unique($camperChassisBrands));
+        $camperChassisBrands = $this->collectCamperChassisBrandSlugs();
 
         if ($camperChassisBrands !== []) {
             $body['CamperChassisBrand'] = count($camperChassisBrands) === 1
@@ -350,5 +289,91 @@ readonly class CamperSearchCriteria implements SearchQuery
         }
 
         return $body;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectTransmissionSlugs(): array
+    {
+        if ($this->transmissions === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (TransmissionType $transmission): string => $transmission->slug(),
+            $this->transmissions,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectTransmissionValues(): array
+    {
+        if ($this->transmissions === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (TransmissionType $transmission): string => $transmission->value,
+            $this->transmissions,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectBedLayoutSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->bedLayouts);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectSeatingLayoutSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->seatingLayouts);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectSanitaryLayoutSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->sanitaryLayouts);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectKitchenLayoutSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->kitchenLayouts);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectCamperChassisBrandSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->camperChassisBrands);
+    }
+
+    /**
+     * @param  FilterOption[]|null  $options
+     * @return string[]
+     */
+    private function collectFilterOptionSlugs(?array $options): array
+    {
+        if ($options === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (FilterOption $option): string => $option->slug,
+            $options,
+        )));
     }
 }

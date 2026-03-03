@@ -69,7 +69,6 @@ $client = new ViaBOVAG(
     httpClient: $yourPsr18Client,
     cache: $yourPsr16Cache,
     cacheTtl: 3600,    // Build ID cache TTL in seconds (default: 1 hour)
-    maxRetries: 2,     // Retries on transient errors like 429/503 (default: 2)
 );
 ```
 
@@ -154,7 +153,7 @@ $results = $client->search(new CarSearchCriteria(
     mileageTo: 100000,
     bodyTypes: [CarBodyType::Hatchback],
     fuelTypes: [CarFuelType::Petrol, CarFuelType::Hybrid],
-    transmission: TransmissionType::Automatic,
+    transmissions: [TransmissionType::Automatic],
     accessories: [AccessoryFilter::Navigation, AccessoryFilter::CruiseControl],
     page: 1,
 ));
@@ -173,7 +172,7 @@ $results = $client->search(new MotorcycleSearchCriteria(
     brand: new Brand(slug: 'suzuki', label: 'Suzuki'),
     engineCapacityFrom: 600,
     bodyTypes: [MotorcycleBodyType::Sport, MotorcycleBodyType::Naked],
-    driversLicense: DriversLicense::A,
+    driversLicenses: [DriversLicense::A],
     sortOrder: SortOrder::PriceAscending,
 ));
 ```
@@ -207,7 +206,7 @@ $results = $client->search(new CamperSearchCriteria(
 
 ### Multi-Select Filters
 
-Several filters support both singular and plural parameters. You can pass either one, or combine them.
+Filters that support multiple values are array-based. Pass one value as a single-item array.
 
 ```php
 use NiekNijland\ViaBOVAG\Data\BovagWarranty;
@@ -237,7 +236,33 @@ $results = $client->search(new MotorcycleSearchCriteria(
 ));
 ```
 
-When both singular and plural variants are set (for example `condition` + `conditions`), values are merged and deduplicated.
+`specifiedBatteryRange` remains a single `FilterOption`, because the live API accepts one battery-range value.
+
+### Grouped Filter Objects
+
+For cleaner construction, you can build criteria from grouped value objects:
+
+```php
+use NiekNijland\ViaBOVAG\Data\CarSearchCriteria;
+use NiekNijland\ViaBOVAG\Data\FilterOption;
+use NiekNijland\ViaBOVAG\Data\TransmissionType;
+use NiekNijland\ViaBOVAG\Data\Filters\CarSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
+
+$criteria = CarSearchCriteria::fromFilters(
+    shared: new SharedSearchFilters(
+        priceFrom: 5000,
+        priceTo: 25000,
+    ),
+    filters: new CarSearchFilters(
+        transmissions: [TransmissionType::Automatic],
+        cities: [new FilterOption(slug: 'utrecht', label: 'Utrecht')],
+    ),
+    page: 1,
+);
+
+$results = $client->search($criteria);
+```
 
 ### Working with Search Results
 
@@ -342,12 +367,10 @@ All search criteria classes share these filter parameters:
 | `enginePowerFrom` | `?int` | Minimum engine power in HP |
 | `enginePowerTo` | `?int` | Maximum engine power in HP |
 | `colors` | `?string[]` | Color filter values |
-| `condition` | `?Condition` | `Condition::Used` or `Condition::New` |
-| `conditions` | `?Condition[]` | Multi-select variant of `condition` |
+| `conditions` | `?Condition[]` | Condition filters (`Condition::Used`, `Condition::New`) |
 | `postalCode` | `?string` | Postal code for location search |
 | `distance` | `?Distance` | Currently ignored by viabovag API (postal code searches use 20 km default) |
-| `warranty` | `?BovagWarranty` | BOVAG warranty duration filter |
-| `warranties` | `?BovagWarranty[]` | Multi-select variant of `warranty` |
+| `warranties` | `?BovagWarranty[]` | BOVAG warranty filters |
 | `fullyServiced` | `?bool` | 100% maintained |
 | `hasBovagChecklist` | `?bool` | 40-point BOVAG checklist completed |
 | `hasBovagMaintenanceFree` | `?bool` | BOVAG maintenance-free |
@@ -376,16 +399,14 @@ For `enginePowerFrom` / `enginePowerTo`, viabovag uses discrete power buckets in
 | `topSpeedFrom` | `?int` | Minimum top speed |
 | `bodyTypes` | `?CarBodyType[]` | Body type filters |
 | `fuelTypes` | `?CarFuelType[]` | Fuel type filters |
-| `transmission` | `?TransmissionType` | Transmission type |
-| `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
+| `transmissions` | `?TransmissionType[]` | Transmission filters |
 | `gearCounts` | `?GearCount[]` | Number of gears |
 | `cylinderCounts` | `?CylinderCount[]` | Number of cylinders |
 | `seatCounts` | `?SeatCount[]` | Number of seats |
 | `driveTypes` | `?DriveType[]` | Drive type (FWD/RWD/4WD) |
 | `accessories` | `?AccessoryFilter[]` | Required accessories |
 | `emptyMassTo` | `?int` | Maximum empty weight |
-| `city` | `?FilterOption` | City option value object (`City` facet) |
-| `cities` | `?FilterOption[]` | Multi-select variant of `city` |
+| `cities` | `?FilterOption[]` | City filters (`City` facet options) |
 | `isLeaseable` | `?bool` | Online leaseable |
 | `doorCountFrom` | `?int` | Minimum door count |
 | `doorCountTo` | `?int` | Maximum door count |
@@ -399,10 +420,8 @@ For `enginePowerFrom` / `enginePowerTo`, viabovag uses discrete power buckets in
 | `maxChargingPowerHome` | `?int` | Minimum home charging power (kW) |
 | `maxQuickChargingPower` | `?int` | Minimum quick charging power (kW) |
 | `isPluginHybrid` | `?bool` | Plugin hybrid vehicle |
-| `energyLabel` | `?FilterOption` | Energy label option value object (`EnergyLabel` facet) |
-| `energyLabels` | `?FilterOption[]` | Multi-select variant of `energyLabel` |
-| `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
-| `specifiedBatteryRanges` | `?FilterOption[]` | Backward-compatible input list; first value is used because the live API accepts only one range |
+| `energyLabels` | `?FilterOption[]` | Energy label filters (`EnergyLabel` facet options) |
+| `specifiedBatteryRange` | `?FilterOption` | Battery range (`SpecifiedBatteryRange` facet, single value) |
 
 ### Motorcycle-Specific Filters
 
@@ -414,14 +433,9 @@ For `enginePowerFrom` / `enginePowerTo`, viabovag uses discrete power buckets in
 | `topSpeedFrom` | `?int` | Minimum top speed |
 | `bodyTypes` | `?MotorcycleBodyType[]` | Category filters (`BodyType` facet, e.g. Crosser, Naked, Tourer) |
 | `fuelTypes` | `?MotorcycleFuelType[]` | Fuel type filters |
-| `transmission` | `?TransmissionType` | Transmission type |
-| `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
-| `driversLicense` | `?DriversLicense` | Required license (A, A1, A2) |
-| `driversLicenses` | `?DriversLicense[]` | Multi-select variant of `driversLicense` |
-| `accessory` | `?FilterOption` | Accessory option value object (`Accessory` facet) |
-| `accessories` | `?FilterOption[]` | Multi-select variant of `accessory` |
-| `frameType` | `?FilterOption` | Unsupported for motorcycles (constructor throws). Use `bodyTypes` for category filtering |
-| `frameTypes` | `?FilterOption[]` | Unsupported for motorcycles (constructor throws). Use `bodyTypes` for category filtering |
+| `transmissions` | `?TransmissionType[]` | Transmission filters |
+| `driversLicenses` | `?DriversLicense[]` | Required license filters (A, A1, A2) |
+| `accessories` | `?FilterOption[]` | Accessory filters (`Accessory` facet options) |
 
 ### Bicycle-Specific Filters
 
@@ -431,17 +445,13 @@ For `enginePowerFrom` / `enginePowerTo`, viabovag uses discrete power buckets in
 | `fuelTypes` | `?BicycleFuelType[]` | Fuel type filters |
 | `frameHeightFrom` | `?int` | Minimum frame height in cm |
 | `frameHeightTo` | `?int` | Maximum frame height in cm |
-| `frameMaterial` | `?FilterOption` | Frame material option value object (`FrameMaterial` facet) |
-| `frameMaterials` | `?FilterOption[]` | Multi-select variant of `frameMaterial` |
-| `brakeType` | `?FilterOption` | Brake type option value object (`BrakeType` facet) |
-| `brakeTypes` | `?FilterOption[]` | Multi-select variant of `brakeType` |
+| `frameMaterials` | `?FilterOption[]` | Frame material filters (`FrameMaterial` facet options) |
+| `brakeTypes` | `?FilterOption[]` | Brake type filters (`BrakeType` facet options) |
 | `batteryRemovable` | `?bool` | Removable battery |
 | `batteryCapacityFrom` | `?int` | Minimum battery capacity (Wh) |
 | `batteryCapacityTo` | `?int` | Maximum battery capacity (Wh) |
-| `engineBrand` | `?FilterOption` | Motor brand option value object (`EngineBrand` facet) |
-| `engineBrands` | `?FilterOption[]` | Multi-select variant of `engineBrand` |
+| `engineBrands` | `?FilterOption[]` | Motor brand filters (`EngineBrand` facet options) |
 | `specifiedBatteryRange` | `?FilterOption` | Battery range option value object (`SpecifiedBatteryRange` facet) |
-| `specifiedBatteryRanges` | `?FilterOption[]` | Backward-compatible input list; first value is used because the live API accepts only one range |
 
 ### Camper-Specific Filters
 
@@ -449,20 +459,14 @@ For `enginePowerFrom` / `enginePowerTo`, viabovag uses discrete power buckets in
 |---|---|---|
 | `engineCapacityFrom` | `?int` | Minimum engine capacity in cc |
 | `engineCapacityTo` | `?int` | Maximum engine capacity in cc |
-| `transmission` | `?TransmissionType` | Transmission type |
-| `transmissions` | `?TransmissionType[]` | Multi-select variant of `transmission` |
+| `transmissions` | `?TransmissionType[]` | Transmission filters |
 | `bedCount` | `?int` | Number of sleeping places |
-| `bedLayout` | `?FilterOption` | Bed layout option value object (`BedLayout` facet) |
-| `bedLayouts` | `?FilterOption[]` | Multi-select variant of `bedLayout` |
-| `seatingLayout` | `?FilterOption` | Seating layout option value object (`SeatingLayout` facet) |
-| `seatingLayouts` | `?FilterOption[]` | Multi-select variant of `seatingLayout` |
-| `sanitaryLayout` | `?FilterOption` | Sanitary layout option value object (`SanitaryLayout` facet) |
-| `sanitaryLayouts` | `?FilterOption[]` | Multi-select variant of `sanitaryLayout` |
-| `kitchenLayout` | `?FilterOption` | Kitchen layout option value object (`KitchenLayout` facet) |
-| `kitchenLayouts` | `?FilterOption[]` | Multi-select variant of `kitchenLayout` |
+| `bedLayouts` | `?FilterOption[]` | Bed layout filters (`BedLayout` facet options) |
+| `seatingLayouts` | `?FilterOption[]` | Seating layout filters (`SeatingLayout` facet options) |
+| `sanitaryLayouts` | `?FilterOption[]` | Sanitary layout filters (`SanitaryLayout` facet options) |
+| `kitchenLayouts` | `?FilterOption[]` | Kitchen layout filters (`KitchenLayout` facet options) |
 | `interiorHeightFrom` | `?int` | Minimum interior standing height in cm |
-| `camperChassisBrand` | `?FilterOption` | Chassis brand option value object (`CamperChassisBrand` facet) |
-| `camperChassisBrands` | `?FilterOption[]` | Multi-select variant of `camperChassisBrand` |
+| `camperChassisBrands` | `?FilterOption[]` | Chassis brand filters (`CamperChassisBrand` facet options) |
 | `maximumMassTo` | `?int` | Maximum mass limit |
 
 ## Data Transfer Objects

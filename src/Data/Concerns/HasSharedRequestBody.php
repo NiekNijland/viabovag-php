@@ -34,11 +34,9 @@ use NiekNijland\ViaBOVAG\Data\SortOrder;
  * @property ?int $enginePowerFrom
  * @property ?int $enginePowerTo
  * @property string[]|null $colors
- * @property ?Condition $condition
  * @property Condition[]|null $conditions
  * @property ?string $postalCode
  * @property ?Distance $distance
- * @property ?BovagWarranty $warranty
  * @property BovagWarranty[]|null $warranties
  * @property ?bool $fullyServiced
  * @property ?bool $hasBovagChecklist
@@ -86,17 +84,15 @@ trait HasSharedRequestBody
             $body['Model'] = $this->model->slug;
         }
 
-        if ($this->modelKeywords !== null) {
-            $normalizedModelKeywords = trim($this->modelKeywords);
+        $modelKeywords = $this->normalizeOptionalTextForRequestBody($this->modelKeywords);
 
-            if ($normalizedModelKeywords !== '') {
-                // The API tokenizes model keywords and does not handle slug-style dashes reliably.
-                if (! str_contains($normalizedModelKeywords, ' ')) {
-                    $normalizedModelKeywords = str_replace('-', ' ', $normalizedModelKeywords);
-                }
-
-                $body['ModelKeywords'] = $normalizedModelKeywords;
+        if ($modelKeywords !== null) {
+            // The API tokenizes model keywords and does not handle slug-style dashes reliably.
+            if (! str_contains($modelKeywords, ' ')) {
+                $modelKeywords = str_replace('-', ' ', $modelKeywords);
             }
+
+            $body['ModelKeywords'] = $modelKeywords;
         }
 
         if ($this->priceFrom !== null) {
@@ -151,19 +147,7 @@ trait HasSharedRequestBody
             $body['Color'] = $this->colors;
         }
 
-        $conditions = [];
-
-        if ($this->condition !== null) {
-            $conditions[] = $this->condition->value;
-        }
-
-        if (is_array($this->conditions)) {
-            foreach ($this->conditions as $condition) {
-                $conditions[] = $condition->value;
-            }
-        }
-
-        $conditions = array_values(array_unique($conditions));
+        $conditions = $this->collectConditionValues();
 
         if ($conditions !== []) {
             $body['Condition'] = $conditions;
@@ -177,26 +161,16 @@ trait HasSharedRequestBody
             $body['Distance'] = $this->distance->value;
         }
 
-        $warranties = [];
-
-        if ($this->warranty !== null) {
-            $warranties[] = $this->warranty->value;
-        }
-
-        if (is_array($this->warranties)) {
-            foreach ($this->warranties as $warranty) {
-                $warranties[] = $warranty->value;
-            }
-        }
-
-        $warranties = array_values(array_unique($warranties));
+        $warranties = $this->collectWarrantyValues();
 
         if ($warranties !== []) {
             $body['Warranty'] = $warranties;
         }
 
-        if ($this->keywords !== null) {
-            $body['Keywords'] = $this->keywords;
+        $keywords = $this->normalizeOptionalTextForRequestBody($this->keywords);
+
+        if ($keywords !== null) {
+            $body['Keywords'] = $keywords;
         }
 
         if ($this->availableSince !== null) {
@@ -275,5 +249,48 @@ trait HasSharedRequestBody
         }
 
         return 'EnginePower'.self::ENGINE_POWER_BUCKETS[0];
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectConditionValues(): array
+    {
+        $conditions = [];
+
+        if (is_array($this->conditions)) {
+            foreach ($this->conditions as $condition) {
+                $conditions[] = $condition->value;
+            }
+        }
+
+        return array_values(array_unique($conditions));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectWarrantyValues(): array
+    {
+        $warranties = [];
+
+        if (is_array($this->warranties)) {
+            foreach ($this->warranties as $warranty) {
+                $warranties[] = $warranty->value;
+            }
+        }
+
+        return array_values(array_unique($warranties));
+    }
+
+    private function normalizeOptionalTextForRequestBody(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim($value);
+
+        return $normalized !== '' ? $normalized : null;
     }
 }

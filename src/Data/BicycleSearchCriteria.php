@@ -7,6 +7,8 @@ namespace NiekNijland\ViaBOVAG\Data;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedRequestBody;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
+use NiekNijland\ViaBOVAG\Data\Filters\BicycleSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
 
 /** @phpstan-consistent-constructor */
 readonly class BicycleSearchCriteria implements SearchQuery
@@ -24,7 +26,6 @@ readonly class BicycleSearchCriteria implements SearchQuery
      * @param  FilterOption[]|null  $frameMaterials
      * @param  FilterOption[]|null  $brakeTypes
      * @param  FilterOption[]|null  $engineBrands
-     * @param  FilterOption[]|null  $specifiedBatteryRanges
      */
     public function __construct(
         // Core
@@ -56,7 +57,6 @@ readonly class BicycleSearchCriteria implements SearchQuery
         public ?array $bodyTypes = null,
         public ?array $fuelTypes = null,
         public ?array $colors = null,
-        public ?Condition $condition = null,
 
         // Location
         public ?string $postalCode = null,
@@ -65,20 +65,15 @@ readonly class BicycleSearchCriteria implements SearchQuery
         // Bicycle-specific
         public ?int $frameHeightFrom = null,
         public ?int $frameHeightTo = null,
-        public ?FilterOption $frameMaterial = null,
         public ?array $frameMaterials = null,
-        public ?FilterOption $brakeType = null,
         public ?array $brakeTypes = null,
         public ?bool $batteryRemovable = null,
         public ?int $batteryCapacityFrom = null,
         public ?int $batteryCapacityTo = null,
-        public ?FilterOption $engineBrand = null,
         public ?array $engineBrands = null,
         public ?FilterOption $specifiedBatteryRange = null,
-        public ?array $specifiedBatteryRanges = null,
 
         // BOVAG certifications
-        public ?BovagWarranty $warranty = null,
         public ?bool $fullyServiced = null,
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
@@ -106,6 +101,59 @@ readonly class BicycleSearchCriteria implements SearchQuery
         public ?array $warranties = null,
     ) {
         self::assertValidPage($page);
+    }
+
+    public static function fromFilters(
+        SharedSearchFilters $shared = new SharedSearchFilters,
+        BicycleSearchFilters $filters = new BicycleSearchFilters,
+        int $page = 1,
+    ): self {
+        return new self(
+            brand: $shared->brand,
+            model: $shared->model,
+            modelKeywords: $shared->modelKeywords,
+            priceFrom: $shared->priceFrom,
+            priceTo: $shared->priceTo,
+            leasePriceFrom: $shared->leasePriceFrom,
+            leasePriceTo: $shared->leasePriceTo,
+            yearFrom: $shared->yearFrom,
+            yearTo: $shared->yearTo,
+            modelYearFrom: $shared->modelYearFrom,
+            modelYearTo: $shared->modelYearTo,
+            mileageFrom: $shared->mileageFrom,
+            mileageTo: $shared->mileageTo,
+            enginePowerFrom: $shared->enginePowerFrom,
+            enginePowerTo: $shared->enginePowerTo,
+            bodyTypes: $filters->bodyTypes,
+            fuelTypes: $filters->fuelTypes,
+            colors: $shared->colors,
+            postalCode: $shared->postalCode,
+            distance: $shared->distance,
+            frameHeightFrom: $filters->frameHeightFrom,
+            frameHeightTo: $filters->frameHeightTo,
+            frameMaterials: $filters->frameMaterials,
+            brakeTypes: $filters->brakeTypes,
+            batteryRemovable: $filters->batteryRemovable,
+            batteryCapacityFrom: $filters->batteryCapacityFrom,
+            batteryCapacityTo: $filters->batteryCapacityTo,
+            engineBrands: $filters->engineBrands,
+            specifiedBatteryRange: $filters->specifiedBatteryRange,
+            fullyServiced: $shared->fullyServiced,
+            hasBovagChecklist: $shared->hasBovagChecklist,
+            hasBovagMaintenanceFree: $shared->hasBovagMaintenanceFree,
+            hasBovagImportOdometerCheck: $shared->hasBovagImportOdometerCheck,
+            servicedOnDelivery: $shared->servicedOnDelivery,
+            hasNapWeblabel: $shared->hasNapWeblabel,
+            vatDeductible: $shared->vatDeductible,
+            isFinanceable: $shared->isFinanceable,
+            isImported: $shared->isImported,
+            keywords: $shared->keywords,
+            availableSince: $shared->availableSince,
+            sortOrder: $shared->sortOrder,
+            page: $page,
+            conditions: $shared->conditions,
+            warranties: $shared->warranties,
+        );
     }
 
     public function mobilityType(): MobilityType
@@ -146,24 +194,12 @@ readonly class BicycleSearchCriteria implements SearchQuery
             $filters[] = 'framehoogte-tot-en-met-'.$this->frameHeightTo;
         }
 
-        if ($this->frameMaterial instanceof FilterOption) {
-            $filters[] = 'framemateriaal-'.$this->frameMaterial->slug;
+        foreach ($this->collectFrameMaterialSlugs() as $frameMaterialSlug) {
+            $filters[] = 'framemateriaal-'.$frameMaterialSlug;
         }
 
-        if ($this->frameMaterials !== null) {
-            foreach ($this->frameMaterials as $frameMaterial) {
-                $filters[] = 'framemateriaal-'.$frameMaterial->slug;
-            }
-        }
-
-        if ($this->brakeType instanceof FilterOption) {
-            $filters[] = 'remtype-'.$this->brakeType->slug;
-        }
-
-        if ($this->brakeTypes !== null) {
-            foreach ($this->brakeTypes as $brakeType) {
-                $filters[] = 'remtype-'.$brakeType->slug;
-            }
+        foreach ($this->collectBrakeTypeSlugs() as $brakeTypeSlug) {
+            $filters[] = 'remtype-'.$brakeTypeSlug;
         }
 
         if ($this->batteryRemovable === true) {
@@ -178,32 +214,12 @@ readonly class BicycleSearchCriteria implements SearchQuery
             $filters[] = 'batterijcapaciteit-tot-en-met-'.$this->batteryCapacityTo;
         }
 
-        if ($this->engineBrand instanceof FilterOption) {
-            $filters[] = 'motormerk-'.$this->engineBrand->slug;
+        foreach ($this->collectEngineBrandSlugs() as $engineBrandSlug) {
+            $filters[] = 'motormerk-'.$engineBrandSlug;
         }
-
-        if ($this->engineBrands !== null) {
-            foreach ($this->engineBrands as $engineBrand) {
-                $filters[] = 'motormerk-'.$engineBrand->slug;
-            }
-        }
-
-        $specifiedBatteryRanges = [];
 
         if ($this->specifiedBatteryRange instanceof FilterOption) {
-            $specifiedBatteryRanges[] = $this->specifiedBatteryRange->slug;
-        }
-
-        if ($this->specifiedBatteryRanges !== null) {
-            foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
-                $specifiedBatteryRanges[] = $specifiedBatteryRange->slug;
-            }
-        }
-
-        $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
-
-        if ($specifiedBatteryRanges !== []) {
-            $filters[] = 'opgegeven-bereik-'.$specifiedBatteryRanges[0];
+            $filters[] = 'opgegeven-bereik-'.$this->specifiedBatteryRange->slug;
         }
 
         return $filters;
@@ -239,37 +255,13 @@ readonly class BicycleSearchCriteria implements SearchQuery
             $body['FrameHeightTo'] = $this->frameHeightTo;
         }
 
-        $frameMaterials = [];
-
-        if ($this->frameMaterial instanceof FilterOption) {
-            $frameMaterials[] = $this->frameMaterial->slug;
-        }
-
-        if ($this->frameMaterials !== null) {
-            foreach ($this->frameMaterials as $frameMaterial) {
-                $frameMaterials[] = $frameMaterial->slug;
-            }
-        }
-
-        $frameMaterials = array_values(array_unique($frameMaterials));
+        $frameMaterials = $this->collectFrameMaterialSlugs();
 
         if ($frameMaterials !== []) {
             $body['FrameMaterial'] = count($frameMaterials) === 1 ? $frameMaterials[0] : $frameMaterials;
         }
 
-        $brakeTypes = [];
-
-        if ($this->brakeType instanceof FilterOption) {
-            $brakeTypes[] = $this->brakeType->slug;
-        }
-
-        if ($this->brakeTypes !== null) {
-            foreach ($this->brakeTypes as $brakeType) {
-                $brakeTypes[] = $brakeType->slug;
-            }
-        }
-
-        $brakeTypes = array_values(array_unique($brakeTypes));
+        $brakeTypes = $this->collectBrakeTypeSlugs();
 
         if ($brakeTypes !== []) {
             $body['BrakeType'] = count($brakeTypes) === 1 ? $brakeTypes[0] : $brakeTypes;
@@ -287,42 +279,56 @@ readonly class BicycleSearchCriteria implements SearchQuery
             $body['BatteryCapacityTo'] = $this->batteryCapacityTo;
         }
 
-        $engineBrands = [];
-
-        if ($this->engineBrand instanceof FilterOption) {
-            $engineBrands[] = $this->engineBrand->slug;
-        }
-
-        if ($this->engineBrands !== null) {
-            foreach ($this->engineBrands as $engineBrand) {
-                $engineBrands[] = $engineBrand->slug;
-            }
-        }
-
-        $engineBrands = array_values(array_unique($engineBrands));
+        $engineBrands = $this->collectEngineBrandSlugs();
 
         if ($engineBrands !== []) {
             $body['EngineBrand'] = count($engineBrands) === 1 ? $engineBrands[0] : $engineBrands;
         }
 
-        $specifiedBatteryRanges = [];
-
         if ($this->specifiedBatteryRange instanceof FilterOption) {
-            $specifiedBatteryRanges[] = $this->specifiedBatteryRange->slug;
-        }
-
-        if ($this->specifiedBatteryRanges !== null) {
-            foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
-                $specifiedBatteryRanges[] = $specifiedBatteryRange->slug;
-            }
-        }
-
-        $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
-
-        if ($specifiedBatteryRanges !== []) {
-            $body['SpecifiedBatteryRange'] = $specifiedBatteryRanges[0];
+            $body['SpecifiedBatteryRange'] = $this->specifiedBatteryRange->slug;
         }
 
         return $body;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectFrameMaterialSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->frameMaterials);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectBrakeTypeSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->brakeTypes);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectEngineBrandSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->engineBrands);
+    }
+
+    /**
+     * @param  FilterOption[]|null  $options
+     * @return string[]
+     */
+    private function collectFilterOptionSlugs(?array $options): array
+    {
+        if ($options === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (FilterOption $option): string => $option->slug,
+            $options,
+        )));
     }
 }

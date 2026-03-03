@@ -7,6 +7,8 @@ namespace NiekNijland\ViaBOVAG\Data;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedRequestBody;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
+use NiekNijland\ViaBOVAG\Data\Filters\CarSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
 
 /** @phpstan-consistent-constructor */
 readonly class CarSearchCriteria implements SearchQuery
@@ -29,7 +31,6 @@ readonly class CarSearchCriteria implements SearchQuery
      * @param  TransmissionType[]|null  $transmissions
      * @param  FilterOption[]|null  $cities
      * @param  FilterOption[]|null  $energyLabels
-     * @param  FilterOption[]|null  $specifiedBatteryRanges
      */
     public function __construct(
         // Core
@@ -64,21 +65,17 @@ readonly class CarSearchCriteria implements SearchQuery
         // Vehicle characteristics
         public ?array $bodyTypes = null,
         public ?array $fuelTypes = null,
-        public ?TransmissionType $transmission = null,
         public ?array $gearCounts = null,
         public ?array $driveTypes = null,
         public ?array $colors = null,
-        public ?Condition $condition = null,
         public ?array $cylinderCounts = null,
 
         // Location
         public ?string $postalCode = null,
         public ?Distance $distance = null,
-        public ?FilterOption $city = null,
         public ?array $cities = null,
 
         // BOVAG certifications
-        public ?BovagWarranty $warranty = null,
         public ?bool $fullyServiced = null,
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
@@ -109,10 +106,8 @@ readonly class CarSearchCriteria implements SearchQuery
         public ?int $maxChargingPowerHome = null,
         public ?int $maxQuickChargingPower = null,
         public ?bool $isPluginHybrid = null,
-        public ?FilterOption $energyLabel = null,
         public ?FilterOption $specifiedBatteryRange = null,
         public ?array $energyLabels = null,
-        public ?array $specifiedBatteryRanges = null,
 
         // Search
         public ?string $keywords = null,
@@ -131,6 +126,77 @@ readonly class CarSearchCriteria implements SearchQuery
         public ?array $transmissions = null,
     ) {
         self::assertValidPage($page);
+    }
+
+    public static function fromFilters(
+        SharedSearchFilters $shared = new SharedSearchFilters,
+        CarSearchFilters $filters = new CarSearchFilters,
+        int $page = 1,
+    ): self {
+        return new self(
+            brand: $shared->brand,
+            model: $shared->model,
+            modelKeywords: $shared->modelKeywords,
+            priceFrom: $shared->priceFrom,
+            priceTo: $shared->priceTo,
+            leasePriceFrom: $shared->leasePriceFrom,
+            leasePriceTo: $shared->leasePriceTo,
+            yearFrom: $shared->yearFrom,
+            yearTo: $shared->yearTo,
+            modelYearFrom: $shared->modelYearFrom,
+            modelYearTo: $shared->modelYearTo,
+            mileageFrom: $shared->mileageFrom,
+            mileageTo: $shared->mileageTo,
+            enginePowerFrom: $shared->enginePowerFrom,
+            enginePowerTo: $shared->enginePowerTo,
+            engineCapacityFrom: $filters->engineCapacityFrom,
+            engineCapacityTo: $filters->engineCapacityTo,
+            accelerationTo: $filters->accelerationTo,
+            topSpeedFrom: $filters->topSpeedFrom,
+            bodyTypes: $filters->bodyTypes,
+            fuelTypes: $filters->fuelTypes,
+            gearCounts: $filters->gearCounts,
+            driveTypes: $filters->driveTypes,
+            colors: $shared->colors,
+            cylinderCounts: $filters->cylinderCounts,
+            postalCode: $shared->postalCode,
+            distance: $shared->distance,
+            cities: $filters->cities,
+            fullyServiced: $shared->fullyServiced,
+            hasBovagChecklist: $shared->hasBovagChecklist,
+            hasBovagMaintenanceFree: $shared->hasBovagMaintenanceFree,
+            hasBovagImportOdometerCheck: $shared->hasBovagImportOdometerCheck,
+            servicedOnDelivery: $shared->servicedOnDelivery,
+            hasNapWeblabel: $shared->hasNapWeblabel,
+            vatDeductible: $shared->vatDeductible,
+            isFinanceable: $shared->isFinanceable,
+            isImported: $shared->isImported,
+            isLeaseable: $filters->isLeaseable,
+            seatCounts: $filters->seatCounts,
+            emptyMassTo: $filters->emptyMassTo,
+            doorCountFrom: $filters->doorCountFrom,
+            doorCountTo: $filters->doorCountTo,
+            wheelSizeFrom: $filters->wheelSizeFrom,
+            wheelSizeTo: $filters->wheelSizeTo,
+            brakedTowingWeightFrom: $filters->brakedTowingWeightFrom,
+            brakedTowingWeightTo: $filters->brakedTowingWeightTo,
+            maximumMassTo: $filters->maximumMassTo,
+            batteryCapacityFrom: $filters->batteryCapacityFrom,
+            batteryCapacityTo: $filters->batteryCapacityTo,
+            maxChargingPowerHome: $filters->maxChargingPowerHome,
+            maxQuickChargingPower: $filters->maxQuickChargingPower,
+            isPluginHybrid: $filters->isPluginHybrid,
+            specifiedBatteryRange: $filters->specifiedBatteryRange,
+            energyLabels: $filters->energyLabels,
+            keywords: $shared->keywords,
+            accessories: $filters->accessories,
+            availableSince: $shared->availableSince,
+            sortOrder: $shared->sortOrder,
+            page: $page,
+            conditions: $shared->conditions,
+            warranties: $shared->warranties,
+            transmissions: $filters->transmissions,
+        );
     }
 
     public function mobilityType(): MobilityType
@@ -170,14 +236,8 @@ readonly class CarSearchCriteria implements SearchQuery
             }
         }
 
-        if ($this->transmission instanceof TransmissionType) {
-            $filters[] = $this->transmission->slug();
-        }
-
-        if ($this->transmissions !== null) {
-            foreach ($this->transmissions as $transmission) {
-                $filters[] = $transmission->slug();
-            }
+        foreach ($this->collectTransmissionSlugs() as $transmissionSlug) {
+            $filters[] = $transmissionSlug;
         }
 
         if ($this->gearCounts !== null) {
@@ -223,14 +283,8 @@ readonly class CarSearchCriteria implements SearchQuery
         }
 
         // Car-specific filters
-        if ($this->city instanceof FilterOption) {
-            $filters[] = 'stad-'.$this->city->slug;
-        }
-
-        if ($this->cities !== null) {
-            foreach ($this->cities as $city) {
-                $filters[] = 'stad-'.$city->slug;
-            }
+        foreach ($this->collectCitySlugs() as $citySlug) {
+            $filters[] = 'stad-'.$citySlug;
         }
 
         if ($this->isLeaseable === true) {
@@ -286,32 +340,12 @@ readonly class CarSearchCriteria implements SearchQuery
             $filters[] = 'plug-in-hybride';
         }
 
-        if ($this->energyLabel instanceof FilterOption) {
-            $filters[] = 'energielabel-'.$this->energyLabel->slug;
+        foreach ($this->collectEnergyLabelSlugs() as $energyLabelSlug) {
+            $filters[] = 'energielabel-'.$energyLabelSlug;
         }
-
-        if ($this->energyLabels !== null) {
-            foreach ($this->energyLabels as $energyLabel) {
-                $filters[] = 'energielabel-'.$energyLabel->slug;
-            }
-        }
-
-        $specifiedBatteryRanges = [];
 
         if ($this->specifiedBatteryRange instanceof FilterOption) {
-            $specifiedBatteryRanges[] = $this->specifiedBatteryRange->slug;
-        }
-
-        if ($this->specifiedBatteryRanges !== null) {
-            foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
-                $specifiedBatteryRanges[] = $specifiedBatteryRange->slug;
-            }
-        }
-
-        $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
-
-        if ($specifiedBatteryRanges !== []) {
-            $filters[] = 'opgegeven-bereik-'.$specifiedBatteryRanges[0];
+            $filters[] = 'opgegeven-bereik-'.$this->specifiedBatteryRange->slug;
         }
 
         return $filters;
@@ -346,19 +380,7 @@ readonly class CarSearchCriteria implements SearchQuery
             );
         }
 
-        $transmissions = [];
-
-        if ($this->transmission instanceof TransmissionType) {
-            $transmissions[] = $this->transmission->value;
-        }
-
-        if ($this->transmissions !== null) {
-            foreach ($this->transmissions as $transmission) {
-                $transmissions[] = $transmission->value;
-            }
-        }
-
-        $transmissions = array_values(array_unique($transmissions));
+        $transmissions = $this->collectTransmissionValues();
 
         if ($transmissions !== []) {
             $body['Transmission'] = $transmissions;
@@ -411,19 +433,7 @@ readonly class CarSearchCriteria implements SearchQuery
             $body['EmptyMassTo'] = $this->emptyMassTo;
         }
 
-        $cities = [];
-
-        if ($this->city instanceof FilterOption) {
-            $cities[] = $this->city->slug;
-        }
-
-        if ($this->cities !== null) {
-            foreach ($this->cities as $city) {
-                $cities[] = $city->slug;
-            }
-        }
-
-        $cities = array_values(array_unique($cities));
+        $cities = $this->collectCitySlugs();
 
         if ($cities !== []) {
             $body['City'] = count($cities) === 1 ? $cities[0] : $cities;
@@ -482,42 +492,78 @@ readonly class CarSearchCriteria implements SearchQuery
             $body['IsPluginHybrid'] = true;
         }
 
-        $energyLabels = [];
-
-        if ($this->energyLabel instanceof FilterOption) {
-            $energyLabels[] = $this->energyLabel->slug;
-        }
-
-        if ($this->energyLabels !== null) {
-            foreach ($this->energyLabels as $energyLabel) {
-                $energyLabels[] = $energyLabel->slug;
-            }
-        }
-
-        $energyLabels = array_values(array_unique($energyLabels));
+        $energyLabels = $this->collectEnergyLabelSlugs();
 
         if ($energyLabels !== []) {
             $body['EnergyLabel'] = $energyLabels;
         }
 
-        $specifiedBatteryRanges = [];
-
         if ($this->specifiedBatteryRange instanceof FilterOption) {
-            $specifiedBatteryRanges[] = $this->specifiedBatteryRange->slug;
-        }
-
-        if ($this->specifiedBatteryRanges !== null) {
-            foreach ($this->specifiedBatteryRanges as $specifiedBatteryRange) {
-                $specifiedBatteryRanges[] = $specifiedBatteryRange->slug;
-            }
-        }
-
-        $specifiedBatteryRanges = array_values(array_unique($specifiedBatteryRanges));
-
-        if ($specifiedBatteryRanges !== []) {
-            $body['SpecifiedBatteryRange'] = $specifiedBatteryRanges[0];
+            $body['SpecifiedBatteryRange'] = $this->specifiedBatteryRange->slug;
         }
 
         return $body;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectTransmissionSlugs(): array
+    {
+        if ($this->transmissions === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (TransmissionType $transmission): string => $transmission->slug(),
+            $this->transmissions,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectTransmissionValues(): array
+    {
+        if ($this->transmissions === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (TransmissionType $transmission): string => $transmission->value,
+            $this->transmissions,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectCitySlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->cities);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectEnergyLabelSlugs(): array
+    {
+        return $this->collectFilterOptionSlugs($this->energyLabels);
+    }
+
+    /**
+     * @param  FilterOption[]|null  $options
+     * @return string[]
+     */
+    private function collectFilterOptionSlugs(?array $options): array
+    {
+        if ($options === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (FilterOption $option): string => $option->slug,
+            $options,
+        )));
     }
 }

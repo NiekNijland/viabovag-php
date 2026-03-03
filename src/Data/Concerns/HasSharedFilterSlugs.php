@@ -33,11 +33,9 @@ use NiekNijland\ViaBOVAG\Data\SortOrder;
  * @property ?int $enginePowerFrom
  * @property ?int $enginePowerTo
  * @property string[]|null $colors
- * @property ?Condition $condition
  * @property Condition[]|null $conditions
  * @property ?string $postalCode
  * @property ?Distance $distance
- * @property ?BovagWarranty $warranty
  * @property BovagWarranty[]|null $warranties
  * @property ?bool $fullyServiced
  * @property ?bool $hasBovagChecklist
@@ -78,8 +76,10 @@ trait HasSharedFilterSlugs
             $filters[] = 'model-'.$this->model->slug;
         }
 
-        if ($this->modelKeywords !== null) {
-            $filters[] = 'model-trefwoorden-'.$this->slugify($this->modelKeywords);
+        $modelKeywords = $this->normalizeOptionalTextForSlugs($this->modelKeywords);
+
+        if ($modelKeywords !== null) {
+            $filters[] = 'model-trefwoorden-'.$this->slugify($modelKeywords);
         }
 
         if ($this->priceFrom !== null) {
@@ -136,32 +136,18 @@ trait HasSharedFilterSlugs
             }
         }
 
-        if ($this->condition !== null) {
-            $filters[] = $this->condition->slug();
-        }
-
-        if (is_array($this->conditions)) {
-            foreach ($this->conditions as $condition) {
-                $filters[] = $condition->slug();
-            }
-        }
+        $filters = [...$filters, ...$this->collectConditionSlugs()];
 
         if ($this->postalCode !== null) {
             $filters[] = 'postcode-'.$this->postalCode;
         }
 
-        if ($this->warranty !== null) {
-            $filters[] = $this->warranty->slug();
-        }
+        $filters = [...$filters, ...$this->collectWarrantySlugs()];
 
-        if (is_array($this->warranties)) {
-            foreach ($this->warranties as $warranty) {
-                $filters[] = $warranty->slug();
-            }
-        }
+        $keywords = $this->normalizeOptionalTextForSlugs($this->keywords);
 
-        if ($this->keywords !== null) {
-            $filters[] = 'trefwoorden-'.$this->slugify($this->keywords);
+        if ($keywords !== null) {
+            $filters[] = 'trefwoorden-'.$this->slugify($keywords);
         }
 
         if ($this->availableSince !== null) {
@@ -212,5 +198,48 @@ trait HasSharedFilterSlugs
         }
 
         return $filters;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectConditionSlugs(): array
+    {
+        $slugs = [];
+
+        if (is_array($this->conditions)) {
+            foreach ($this->conditions as $condition) {
+                $slugs[] = $condition->slug();
+            }
+        }
+
+        return array_values(array_unique($slugs));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectWarrantySlugs(): array
+    {
+        $slugs = [];
+
+        if (is_array($this->warranties)) {
+            foreach ($this->warranties as $warranty) {
+                $slugs[] = $warranty->slug();
+            }
+        }
+
+        return array_values(array_unique($slugs));
+    }
+
+    private function normalizeOptionalTextForSlugs(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim($value);
+
+        return $normalized !== '' ? $normalized : null;
     }
 }

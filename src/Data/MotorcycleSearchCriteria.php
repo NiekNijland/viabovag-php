@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace NiekNijland\ViaBOVAG\Data;
 
-use InvalidArgumentException;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedFilterSlugs;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasSharedRequestBody;
 use NiekNijland\ViaBOVAG\Data\Concerns\HasWithPage;
+use NiekNijland\ViaBOVAG\Data\Filters\MotorcycleSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
 
 /** @phpstan-consistent-constructor */
 readonly class MotorcycleSearchCriteria implements SearchQuery
@@ -25,7 +26,6 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
      * @param  TransmissionType[]|null  $transmissions
      * @param  DriversLicense[]|null  $driversLicenses
      * @param  FilterOption[]|null  $accessories
-     * @param  FilterOption[]|null  $frameTypes
      */
     public function __construct(
         // Core
@@ -60,21 +60,13 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         // Vehicle characteristics
         public ?array $bodyTypes = null,
         public ?array $fuelTypes = null,
-        public ?TransmissionType $transmission = null,
         public ?array $colors = null,
-        public ?Condition $condition = null,
-        public ?FilterOption $accessory = null,
-        public ?FilterOption $frameType = null,
 
         // Location
         public ?string $postalCode = null,
         public ?Distance $distance = null,
 
-        // Motorcycle-specific
-        public ?DriversLicense $driversLicense = null,
-
         // BOVAG certifications
-        public ?BovagWarranty $warranty = null,
         public ?bool $fullyServiced = null,
         public ?bool $hasBovagChecklist = null,
         public ?bool $hasBovagMaintenanceFree = null,
@@ -103,10 +95,59 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
         public ?array $transmissions = null,
         public ?array $driversLicenses = null,
         public ?array $accessories = null,
-        public ?array $frameTypes = null,
     ) {
         self::assertValidPage($page);
-        $this->assertNoFrameTypeFilters($frameType, $frameTypes);
+    }
+
+    public static function fromFilters(
+        SharedSearchFilters $shared = new SharedSearchFilters,
+        MotorcycleSearchFilters $filters = new MotorcycleSearchFilters,
+        int $page = 1,
+    ): self {
+        return new self(
+            brand: $shared->brand,
+            model: $shared->model,
+            modelKeywords: $shared->modelKeywords,
+            priceFrom: $shared->priceFrom,
+            priceTo: $shared->priceTo,
+            leasePriceFrom: $shared->leasePriceFrom,
+            leasePriceTo: $shared->leasePriceTo,
+            yearFrom: $shared->yearFrom,
+            yearTo: $shared->yearTo,
+            modelYearFrom: $shared->modelYearFrom,
+            modelYearTo: $shared->modelYearTo,
+            mileageFrom: $shared->mileageFrom,
+            mileageTo: $shared->mileageTo,
+            enginePowerFrom: $shared->enginePowerFrom,
+            enginePowerTo: $shared->enginePowerTo,
+            engineCapacityFrom: $filters->engineCapacityFrom,
+            engineCapacityTo: $filters->engineCapacityTo,
+            accelerationTo: $filters->accelerationTo,
+            topSpeedFrom: $filters->topSpeedFrom,
+            bodyTypes: $filters->bodyTypes,
+            fuelTypes: $filters->fuelTypes,
+            colors: $shared->colors,
+            postalCode: $shared->postalCode,
+            distance: $shared->distance,
+            fullyServiced: $shared->fullyServiced,
+            hasBovagChecklist: $shared->hasBovagChecklist,
+            hasBovagMaintenanceFree: $shared->hasBovagMaintenanceFree,
+            hasBovagImportOdometerCheck: $shared->hasBovagImportOdometerCheck,
+            servicedOnDelivery: $shared->servicedOnDelivery,
+            hasNapWeblabel: $shared->hasNapWeblabel,
+            vatDeductible: $shared->vatDeductible,
+            isFinanceable: $shared->isFinanceable,
+            isImported: $shared->isImported,
+            keywords: $shared->keywords,
+            availableSince: $shared->availableSince,
+            sortOrder: $shared->sortOrder,
+            page: $page,
+            conditions: $shared->conditions,
+            warranties: $shared->warranties,
+            transmissions: $filters->transmissions,
+            driversLicenses: $filters->driversLicenses,
+            accessories: $filters->accessories,
+        );
     }
 
     public function mobilityType(): MobilityType
@@ -146,42 +187,16 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
             }
         }
 
-        if ($this->transmission instanceof TransmissionType) {
-            $filters[] = $this->transmission->slug();
+        foreach ($this->collectTransmissionSlugs() as $transmissionSlug) {
+            $filters[] = $transmissionSlug;
         }
 
-        if ($this->transmissions !== null) {
-            foreach ($this->transmissions as $transmission) {
-                $filters[] = $transmission->slug();
-            }
+        foreach ($this->collectDriversLicenseSlugs() as $driversLicenseSlug) {
+            $filters[] = $driversLicenseSlug;
         }
 
-        if ($this->driversLicense instanceof DriversLicense) {
-            $filters[] = $this->driversLicense->slug();
-        }
-
-        if ($this->driversLicenses !== null) {
-            foreach ($this->driversLicenses as $driversLicense) {
-                $filters[] = $driversLicense->slug();
-            }
-        }
-
-        $accessories = [];
-
-        if ($this->accessory instanceof FilterOption) {
-            $accessories[] = $this->accessory->slug;
-        }
-
-        if ($this->accessories !== null) {
-            foreach ($this->accessories as $accessory) {
-                $accessories[] = $accessory->slug;
-            }
-        }
-
-        $accessories = array_values(array_unique($accessories));
-
-        foreach ($accessories as $accessory) {
-            $filters[] = $accessory;
+        foreach ($this->collectAccessorySlugs() as $accessorySlug) {
+            $filters[] = $accessorySlug;
         }
 
         if ($this->accelerationTo !== null) {
@@ -224,55 +239,19 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
             );
         }
 
-        $transmissions = [];
-
-        if ($this->transmission instanceof TransmissionType) {
-            $transmissions[] = $this->transmission->value;
-        }
-
-        if ($this->transmissions !== null) {
-            foreach ($this->transmissions as $transmission) {
-                $transmissions[] = $transmission->value;
-            }
-        }
-
-        $transmissions = array_values(array_unique($transmissions));
+        $transmissions = $this->collectTransmissionValues();
 
         if ($transmissions !== []) {
             $body['Transmission'] = $transmissions;
         }
 
-        $driversLicenses = [];
-
-        if ($this->driversLicense instanceof DriversLicense) {
-            $driversLicenses[] = $this->driversLicense->value;
-        }
-
-        if ($this->driversLicenses !== null) {
-            foreach ($this->driversLicenses as $driversLicense) {
-                $driversLicenses[] = $driversLicense->value;
-            }
-        }
-
-        $driversLicenses = array_values(array_unique($driversLicenses));
+        $driversLicenses = $this->collectDriversLicenseValues();
 
         if ($driversLicenses !== []) {
             $body['DriversLicense'] = $driversLicenses;
         }
 
-        $accessories = [];
-
-        if ($this->accessory instanceof FilterOption) {
-            $accessories[] = $this->accessory->slug;
-        }
-
-        if ($this->accessories !== null) {
-            foreach ($this->accessories as $accessory) {
-                $accessories[] = $accessory->slug;
-            }
-        }
-
-        $accessories = array_values(array_unique($accessories));
+        $accessories = $this->collectAccessorySlugs();
 
         if ($accessories !== []) {
             $body['Accessory'] = $accessories;
@@ -290,12 +269,77 @@ readonly class MotorcycleSearchCriteria implements SearchQuery
     }
 
     /**
-     * @param  FilterOption[]|null  $frameTypes
+     * @return string[]
      */
-    private function assertNoFrameTypeFilters(?FilterOption $frameType, ?array $frameTypes): void
+    private function collectTransmissionSlugs(): array
     {
-        if ($frameType instanceof FilterOption || ($frameTypes !== null && $frameTypes !== [])) {
-            throw new InvalidArgumentException('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
+        if ($this->transmissions === null) {
+            return [];
         }
+
+        return array_values(array_unique(array_map(
+            fn (TransmissionType $transmission): string => $transmission->slug(),
+            $this->transmissions,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectTransmissionValues(): array
+    {
+        if ($this->transmissions === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (TransmissionType $transmission): string => $transmission->value,
+            $this->transmissions,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectDriversLicenseSlugs(): array
+    {
+        if ($this->driversLicenses === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (DriversLicense $driversLicense): string => $driversLicense->slug(),
+            $this->driversLicenses,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectDriversLicenseValues(): array
+    {
+        if ($this->driversLicenses === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (DriversLicense $driversLicense): string => $driversLicense->value,
+            $this->driversLicenses,
+        )));
+    }
+
+    /**
+     * @return string[]
+     */
+    private function collectAccessorySlugs(): array
+    {
+        if ($this->accessories === null) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            fn (FilterOption $accessory): string => $accessory->slug,
+            $this->accessories,
+        )));
     }
 }

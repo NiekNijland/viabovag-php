@@ -99,47 +99,10 @@ class JsonParser
         $financial = $vehicleSpecs['financial'] ?? [];
         $certainties = $advertisement['certainties'] ?? [];
 
-        $media = array_map(
-            fn (array $item): Media => new Media(
-                type: MediaType::tryFrom($item['type'] ?? 'image') ?? MediaType::Image,
-                url: $item['url'] ?? '',
-            ),
-            $advertisement['media'] ?? [],
-        );
-
-        $specGroups = array_map(
-            fn (array $group): SpecificationGroup => new SpecificationGroup(
-                name: $group['name'] ?? '',
-                specifications: array_map(
-                    fn (array $spec): Specification => new Specification(
-                        label: $spec['label'] ?? '',
-                        value: isset($spec['value']) && is_string($spec['value']) ? $spec['value'] : null,
-                        formattedValue: $spec['formattedValue'] ?? null,
-                        hasValue: (bool) ($spec['hasValue'] ?? false),
-                        formattedValueWithoutUnit: $spec['formattedValueWithoutUnit'] ?? null,
-                    ),
-                    $group['specifications'] ?? [],
-                ),
-                group: $group['group'] ?? null,
-                iconName: $group['iconName'] ?? null,
-            ),
-            $vehicleSpecs['specificationGroups'] ?? [],
-        );
-
-        $accessories = array_map(
-            fn (array|string $item): Accessory => new Accessory(
-                name: is_array($item) ? ($item['name'] ?? '') : $item,
-            ),
-            $vehicleSpecs['accessories'] ?? [],
-        );
-
-        $optionGroups = array_map(
-            fn (array $group): OptionGroup => new OptionGroup(
-                name: $group['name'] ?? '',
-                options: $group['options'] ?? [],
-            ),
-            $vehicleSpecs['optionGroups'] ?? [],
-        );
+        $media = $this->mapDetailMedia($advertisement['media'] ?? []);
+        $specGroups = $this->mapSpecificationGroups($vehicleSpecs['specificationGroups'] ?? []);
+        $accessories = $this->mapAccessories($vehicleSpecs['accessories'] ?? []);
+        $optionGroups = $this->mapOptionGroups($vehicleSpecs['optionGroups'] ?? []);
 
         $company = $this->mapDetailCompany($advertisement['company'] ?? []);
 
@@ -154,10 +117,7 @@ class JsonParser
         $roadTax = $this->extractPriceOrNull($financial['roadTax'] ?? null);
         $fuelConsumption = $this->extractFormattedValueOrNull($financial['fuelConsumption'] ?? null);
         $bijtellingPercentage = $this->extractFormattedValueOrNull($financial['bijtellingPercentage'] ?? null);
-
-        // Financing provider
-        $financing = $advertisement['financing'] ?? $financial['financing'] ?? null;
-        $financingProvider = is_array($financing) ? ($financing['provider'] ?? null) : null;
+        $financingProvider = $this->extractFinancingProvider($advertisement, $financial);
 
         return new ListingDetail(
             id: $vehicleData['id'] ?? '',
@@ -184,6 +144,87 @@ class JsonParser
             bijtellingPercentage: $bijtellingPercentage,
             returnWarrantyMileage: isset($certainties['returnWarrantyMileage']) ? (int) $certainties['returnWarrantyMileage'] : null,
         );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $mediaItems
+     * @return Media[]
+     */
+    private function mapDetailMedia(array $mediaItems): array
+    {
+        return array_map(
+            fn (array $item): Media => new Media(
+                type: MediaType::tryFrom($item['type'] ?? 'image') ?? MediaType::Image,
+                url: $item['url'] ?? '',
+            ),
+            $mediaItems,
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $groups
+     * @return SpecificationGroup[]
+     */
+    private function mapSpecificationGroups(array $groups): array
+    {
+        return array_map(
+            fn (array $group): SpecificationGroup => new SpecificationGroup(
+                name: $group['name'] ?? '',
+                specifications: array_map(
+                    fn (array $spec): Specification => new Specification(
+                        label: $spec['label'] ?? '',
+                        value: isset($spec['value']) && is_string($spec['value']) ? $spec['value'] : null,
+                        formattedValue: $spec['formattedValue'] ?? null,
+                        hasValue: (bool) ($spec['hasValue'] ?? false),
+                        formattedValueWithoutUnit: $spec['formattedValueWithoutUnit'] ?? null,
+                    ),
+                    $group['specifications'] ?? [],
+                ),
+                group: $group['group'] ?? null,
+                iconName: $group['iconName'] ?? null,
+            ),
+            $groups,
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>|string>  $items
+     * @return Accessory[]
+     */
+    private function mapAccessories(array $items): array
+    {
+        return array_map(
+            fn (array|string $item): Accessory => new Accessory(
+                name: is_array($item) ? ($item['name'] ?? '') : $item,
+            ),
+            $items,
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $groups
+     * @return OptionGroup[]
+     */
+    private function mapOptionGroups(array $groups): array
+    {
+        return array_map(
+            fn (array $group): OptionGroup => new OptionGroup(
+                name: $group['name'] ?? '',
+                options: $group['options'] ?? [],
+            ),
+            $groups,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $advertisement
+     * @param  array<string, mixed>  $financial
+     */
+    private function extractFinancingProvider(array $advertisement, array $financial): ?string
+    {
+        $financing = $advertisement['financing'] ?? $financial['financing'] ?? null;
+
+        return is_array($financing) ? ($financing['provider'] ?? null) : null;
     }
 
     /**
@@ -407,28 +448,12 @@ class JsonParser
 
         return array_map(
             function (array $facet): SearchFacet {
-                $options = array_map(
-                    fn (array $option): SearchFacetOption => new SearchFacetOption(
-                        name: $option['name'] ?? '',
-                        label: $option['label'] ?? '',
-                        count: isset($option['count']) ? (int) $option['count'] : null,
-                        selected: (bool) ($option['selected'] ?? false),
-                    ),
-                    $facet['options'] ?? [],
-                );
+                $options = $this->mapFacetOptions($facet['options'] ?? []);
 
                 $optionCategories = array_map(
                     fn (array $category): SearchFacetOptionCategory => new SearchFacetOptionCategory(
                         label: $category['label'] ?? '',
-                        options: array_map(
-                            fn (array $option): SearchFacetOption => new SearchFacetOption(
-                                name: $option['name'] ?? '',
-                                label: $option['label'] ?? '',
-                                count: isset($option['count']) ? (int) $option['count'] : null,
-                                selected: (bool) ($option['selected'] ?? false),
-                            ),
-                            $category['options'] ?? [],
-                        ),
+                        options: $this->mapFacetOptions($category['options'] ?? []),
                     ),
                     $facet['optionCategories'] ?? [],
                 );
@@ -447,6 +472,31 @@ class JsonParser
                 );
             },
             $rawFacets,
+        );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $options
+     * @return SearchFacetOption[]
+     */
+    private function mapFacetOptions(array $options): array
+    {
+        return array_map(
+            $this->mapFacetOption(...),
+            $options,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $option
+     */
+    private function mapFacetOption(array $option): SearchFacetOption
+    {
+        return new SearchFacetOption(
+            name: $option['name'] ?? '',
+            label: $option['label'] ?? '',
+            count: isset($option['count']) ? (int) $option['count'] : null,
+            selected: (bool) ($option['selected'] ?? false),
         );
     }
 

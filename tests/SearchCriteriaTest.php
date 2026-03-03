@@ -22,6 +22,11 @@ use NiekNijland\ViaBOVAG\Data\Distance;
 use NiekNijland\ViaBOVAG\Data\DriversLicense;
 use NiekNijland\ViaBOVAG\Data\DriveType;
 use NiekNijland\ViaBOVAG\Data\FilterOption;
+use NiekNijland\ViaBOVAG\Data\Filters\BicycleSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\CamperSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\CarSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\MotorcycleSearchFilters;
+use NiekNijland\ViaBOVAG\Data\Filters\SharedSearchFilters;
 use NiekNijland\ViaBOVAG\Data\GearCount;
 use NiekNijland\ViaBOVAG\Data\MobilityType;
 use NiekNijland\ViaBOVAG\Data\Model;
@@ -63,6 +68,57 @@ class SearchCriteriaTest extends TestCase
         $criteria = new CamperSearchCriteria;
 
         $this->assertSame(MobilityType::Camper, $criteria->mobilityType());
+    }
+
+    public function test_car_criteria_can_be_created_from_grouped_filters(): void
+    {
+        $criteria = CarSearchCriteria::fromFilters(
+            shared: new SharedSearchFilters(
+                brand: new Brand(slug: 'volkswagen', label: 'Volkswagen'),
+                conditions: [Condition::New],
+            ),
+            filters: new CarSearchFilters(
+                transmissions: [TransmissionType::Automatic],
+                cities: [new FilterOption(slug: 'utrecht', label: 'Utrecht')],
+            ),
+            page: 2,
+        );
+
+        $body = $criteria->toRequestBody();
+
+        $this->assertSame(['volkswagen'], $body['Brand']);
+        $this->assertSame(['Nieuw'], $body['Condition']);
+        $this->assertSame(['Automatisch'], $body['Transmission']);
+        $this->assertSame('utrecht', $body['City']);
+        $this->assertSame(2, $body['PageNumber']);
+    }
+
+    public function test_other_criteria_can_be_created_from_grouped_filters(): void
+    {
+        $motorcycle = MotorcycleSearchCriteria::fromFilters(
+            shared: new SharedSearchFilters,
+            filters: new MotorcycleSearchFilters(
+                driversLicenses: [DriversLicense::A2],
+            ),
+        );
+
+        $bicycle = BicycleSearchCriteria::fromFilters(
+            shared: new SharedSearchFilters,
+            filters: new BicycleSearchFilters(
+                specifiedBatteryRange: new FilterOption(slug: '80-100', label: '80-100 km'),
+            ),
+        );
+
+        $camper = CamperSearchCriteria::fromFilters(
+            shared: new SharedSearchFilters,
+            filters: new CamperSearchFilters(
+                bedCount: 4,
+            ),
+        );
+
+        $this->assertSame(['A2'], $motorcycle->toRequestBody()['DriversLicense']);
+        $this->assertSame('80-100', $bicycle->toRequestBody()['SpecifiedBatteryRange']);
+        $this->assertSame(4, $camper->toRequestBody()['BedCount']);
     }
 
     // --- Shared Filter Slugs ---
@@ -151,7 +207,7 @@ class SearchCriteriaTest extends TestCase
 
     public function test_shared_filter_slugs_condition(): void
     {
-        $criteria = new CarSearchCriteria(condition: Condition::New);
+        $criteria = new CarSearchCriteria(conditions: [Condition::New]);
         $slugs = $criteria->toFilterSlugs();
 
         $this->assertContains('nieuw', $slugs);
@@ -168,7 +224,7 @@ class SearchCriteriaTest extends TestCase
 
     public function test_shared_filter_slugs_warranty(): void
     {
-        $criteria = new CarSearchCriteria(warranty: BovagWarranty::TwelveMonths);
+        $criteria = new CarSearchCriteria(warranties: [BovagWarranty::TwelveMonths]);
         $slugs = $criteria->toFilterSlugs();
 
         $this->assertContains('bovag12maanden', $slugs);
@@ -271,7 +327,7 @@ class SearchCriteriaTest extends TestCase
 
     public function test_car_criteria_transmission(): void
     {
-        $criteria = new CarSearchCriteria(transmission: TransmissionType::Automatic);
+        $criteria = new CarSearchCriteria(transmissions: [TransmissionType::Automatic]);
         $slugs = $criteria->toFilterSlugs();
 
         $this->assertContains('automatisch', $slugs);
@@ -370,8 +426,8 @@ class SearchCriteriaTest extends TestCase
             maxChargingPowerHome: 11,
             maxQuickChargingPower: 150,
             isPluginHybrid: true,
-            energyLabel: new FilterOption(slug: 'a', label: 'A'),
             specifiedBatteryRange: new FilterOption(slug: '300-400', label: '300-400 km'),
+            energyLabels: [new FilterOption(slug: 'a', label: 'A')],
         );
         $slugs = $criteria->toFilterSlugs();
 
@@ -387,7 +443,7 @@ class SearchCriteriaTest extends TestCase
     public function test_car_criteria_leaseable_and_city(): void
     {
         $criteria = new CarSearchCriteria(
-            city: new FilterOption(slug: 'amsterdam', label: 'Amsterdam'),
+            cities: [new FilterOption(slug: 'amsterdam', label: 'Amsterdam')],
             isLeaseable: true,
         );
         $slugs = $criteria->toFilterSlugs();
@@ -403,13 +459,10 @@ class SearchCriteriaTest extends TestCase
                 new FilterOption(slug: 'amsterdam', label: 'Amsterdam'),
                 new FilterOption(slug: 'utrecht', label: 'Utrecht'),
             ],
+            specifiedBatteryRange: new FilterOption(slug: '300-400', label: '300-400 km'),
             energyLabels: [
                 new FilterOption(slug: 'a', label: 'A'),
                 new FilterOption(slug: 'b', label: 'B'),
-            ],
-            specifiedBatteryRanges: [
-                new FilterOption(slug: '300-400', label: '300-400 km'),
-                new FilterOption(slug: '400-500', label: '400-500 km'),
             ],
         );
 
@@ -434,20 +487,10 @@ class SearchCriteriaTest extends TestCase
 
     public function test_motorcycle_criteria_drivers_license(): void
     {
-        $criteria = new MotorcycleSearchCriteria(driversLicense: DriversLicense::A2);
+        $criteria = new MotorcycleSearchCriteria(driversLicenses: [DriversLicense::A2]);
         $slugs = $criteria->toFilterSlugs();
 
         $this->assertContains('rijbewijs-a2', $slugs);
-    }
-
-    public function test_motorcycle_criteria_throws_for_frame_type_filter(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
-
-        new MotorcycleSearchCriteria(
-            frameType: new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
-        );
     }
 
     public function test_motorcycle_criteria_accessory_and_performance_filters(): void
@@ -455,8 +498,10 @@ class SearchCriteriaTest extends TestCase
         $criteria = new MotorcycleSearchCriteria(
             accelerationTo: 8,
             topSpeedFrom: 150,
-            accessory: new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
-            accessories: [new FilterOption(slug: 'buddyseat', label: 'Buddyseat')],
+            accessories: [
+                new FilterOption(slug: 'cruisecontrol', label: 'Cruise Control'),
+                new FilterOption(slug: 'buddyseat', label: 'Buddyseat'),
+            ],
         );
 
         $slugs = $criteria->toFilterSlugs();
@@ -480,19 +525,6 @@ class SearchCriteriaTest extends TestCase
         $this->assertContains('automatisch', $slugs);
         $this->assertContains('rijbewijs-a', $slugs);
         $this->assertContains('rijbewijs-a2', $slugs);
-    }
-
-    public function test_motorcycle_criteria_throws_for_frame_types_filter(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('FrameType filters are not supported for motorcycles. Use bodyTypes (category) instead.');
-
-        new MotorcycleSearchCriteria(
-            frameTypes: [
-                new FilterOption(slug: 'dubbel-wieg', label: 'Dubbel wieg'),
-                new FilterOption(slug: 'trellis', label: 'Trellis'),
-            ],
-        );
     }
 
     public function test_motorcycle_criteria_body_types(): void
@@ -557,12 +589,12 @@ class SearchCriteriaTest extends TestCase
         $criteria = new BicycleSearchCriteria(
             frameHeightFrom: 50,
             frameHeightTo: 60,
-            frameMaterial: new FilterOption(slug: 'aluminium', label: 'Aluminium'),
-            brakeType: new FilterOption(slug: 'schijfrem', label: 'Schijfrem'),
+            frameMaterials: [new FilterOption(slug: 'aluminium', label: 'Aluminium')],
+            brakeTypes: [new FilterOption(slug: 'schijfrem', label: 'Schijfrem')],
             batteryRemovable: true,
             batteryCapacityFrom: 300,
             batteryCapacityTo: 600,
-            engineBrand: new FilterOption(slug: 'bosch', label: 'Bosch'),
+            engineBrands: [new FilterOption(slug: 'bosch', label: 'Bosch')],
             specifiedBatteryRange: new FilterOption(slug: '80-100', label: '80-100 km'),
         );
         $slugs = $criteria->toFilterSlugs();
@@ -593,10 +625,7 @@ class SearchCriteriaTest extends TestCase
                 new FilterOption(slug: 'bosch', label: 'Bosch'),
                 new FilterOption(slug: 'shimano', label: 'Shimano'),
             ],
-            specifiedBatteryRanges: [
-                new FilterOption(slug: '80-100', label: '80-100 km'),
-                new FilterOption(slug: '100-120', label: '100-120 km'),
-            ],
+            specifiedBatteryRange: new FilterOption(slug: '80-100', label: '80-100 km'),
         );
 
         $slugs = $criteria->toFilterSlugs();
@@ -624,12 +653,12 @@ class SearchCriteriaTest extends TestCase
     {
         $criteria = new CamperSearchCriteria(
             bedCount: 4,
-            bedLayout: new FilterOption(slug: 'dwarsbed', label: 'Dwarsbed'),
-            seatingLayout: new FilterOption(slug: 'halfrond', label: 'Halfrond'),
-            sanitaryLayout: new FilterOption(slug: 'douche', label: 'Douche'),
-            kitchenLayout: new FilterOption(slug: 'l-vormig', label: 'L-vormig'),
+            bedLayouts: [new FilterOption(slug: 'dwarsbed', label: 'Dwarsbed')],
+            seatingLayouts: [new FilterOption(slug: 'halfrond', label: 'Halfrond')],
+            sanitaryLayouts: [new FilterOption(slug: 'douche', label: 'Douche')],
+            kitchenLayouts: [new FilterOption(slug: 'l-vormig', label: 'L-vormig')],
             interiorHeightFrom: 190,
-            camperChassisBrand: new FilterOption(slug: 'fiat', label: 'Fiat'),
+            camperChassisBrands: [new FilterOption(slug: 'fiat', label: 'Fiat')],
             maximumMassTo: 3500,
         );
         $slugs = $criteria->toFilterSlugs();
@@ -688,7 +717,7 @@ class SearchCriteriaTest extends TestCase
         $criteria = new CamperSearchCriteria(
             engineCapacityFrom: 2000,
             engineCapacityTo: 3000,
-            transmission: TransmissionType::Automatic,
+            transmissions: [TransmissionType::Automatic],
         );
         $slugs = $criteria->toFilterSlugs();
 
