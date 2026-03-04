@@ -1,9 +1,9 @@
 {
-    "name": "nieknijland/viabovag",
+    "name": "nieknijland/viabovag-php",
     "description": "PHP Package to fetch from viabovag.nl",
     "keywords": [
         "NiekNijland",
-        "viabovag"
+        "ViaBOVAG"
     ],
     "homepage": "https://github.com/nieknijland/viabovag-php",
     "license": "MIT",
