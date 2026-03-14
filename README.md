@@ -13,7 +13,7 @@ A PHP package to search and retrieve vehicle listings from [viabovag.nl](https:/
 ## Installation
 
 ```bash
-composer require nieknijland/viabovag
+composer require nieknijland/viabovag-php
 ```
 
 ## Quick Start
